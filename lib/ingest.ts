@@ -1,0 +1,406 @@
+import { ObjectId } from "mongodb";
+import { z } from "zod";
+import { getDb } from "./db";
+import { callLLM, embed, cleanJsonResponse } from "./llm";
+
+// ==========================================
+// Schemas for LLM Output
+// ==========================================
+export const RouterClassificationSchema = z.object({
+  type: z.enum(["fact", "question", "both"]),
+  reasoning: z.string().optional(),
+});
+export type RouterClassification = z.infer<typeof RouterClassificationSchema>["type"];
+
+export const ExtractedEventSchema = z.object({
+  what: z.string().min(1),
+  who: z.array(z.string()).default([]),
+  whenText: z.string().default(""),
+  whenISO: z.string().nullable().default(null),
+  where: z.string().nullable().default(null),
+  confidence: z.number().min(0).max(1).default(1.0),
+});
+export type ExtractedEvent = z.infer<typeof ExtractedEventSchema>;
+
+export const ExtractedEntitySchema = z.object({
+  name: z.string().min(1),
+  aliases: z.array(z.string()).default([]),
+  type: z.enum(["person", "vehicle", "place", "phone", "object"]).default("person"),
+  role: z.enum(["victim", "suspect", "witness", "other"]).default("other"),
+  alibiStatus: z.enum(["unknown", "claimed", "verified", "broken"]).default("unknown"),
+  alibiDetails: z.string().optional(),
+});
+export type ExtractedEntity = z.infer<typeof ExtractedEntitySchema>;
+
+export const ExtractionResultSchema = z.object({
+  events: z.array(ExtractedEventSchema).default([]),
+  entities: z.array(ExtractedEntitySchema).default([]),
+  open_questions: z.array(z.string()).default([]),
+});
+export type ExtractionResult = z.infer<typeof ExtractionResultSchema>;
+
+// ==========================================
+// 1. Router Classification
+// ==========================================
+export async function classifyMessage(text: string): Promise<RouterClassification> {
+  const prompt = `You are an evidentiary intake triage classifier for a criminal investigation system.
+Analyze the investigator's message and classify it into exactly one of three categories:
+- "fact": statement containing new factual details, evidence, forensic notes, witness statements, locations, or timeline events.
+- "question": query or inquiry seeking answers from case memory (e.g. "Who was seen near Pier 14?", "What leads should we pursue?").
+- "both": contains both new factual evidence and an explicit question or lead request.
+
+Message:
+"${text}"
+
+Respond in JSON only with format:
+{
+  "type": "fact" | "question" | "both",
+  "reasoning": "brief explanation"
+}`;
+
+  try {
+    const raw = await callLLM(prompt, "You are a precise JSON-only router.", {
+      jsonMode: true,
+      temperature: 0.0,
+    });
+    const parsed = JSON.parse(cleanJsonResponse(raw));
+    const validated = RouterClassificationSchema.safeParse(parsed);
+    if (validated.success) {
+      return validated.data.type;
+    }
+  } catch (err) {
+    console.warn("Router classification parse fallback, defaulting to heuristic check:", err);
+  }
+
+  // Heuristic fallback if LLM classification fails
+  const hasQuestionMark = text.includes("?");
+  const words = text.toLowerCase().split(/\s+/);
+  const questionStarters = ["who", "what", "where", "when", "why", "how", "is", "are", "could", "should"];
+  const isQuestionLike = questionStarters.includes(words[0]) || hasQuestionMark;
+
+  if (isQuestionLike && words.length > 15) return "both";
+  if (isQuestionLike) return "question";
+  return "fact";
+}
+
+// ==========================================
+// 2. Fact Extraction (Temperature 0 with Retry)
+// ==========================================
+const EXTRACTION_SYSTEM_PROMPT = `You are a forensic data extraction specialist for criminal case investigation memory.
+STRICT EVIDENTIARY RULES:
+1. Extract ONLY facts explicitly stated in the note. NEVER extrapolate, assume, or fabricate.
+2. For missing time or place: set whenISO to null, where to null. Never guess dates or addresses.
+3. NEVER declare anyone guilty. If evidence points to an individual, designate role as "suspect" or "other" and state "evidence linked to X" objectively.
+4. If an individual claims an alibi or whereabouts, record alibiStatus ("claimed", "verified", "broken", or "unknown").
+5. Identify any obvious gaps, unverified claims, or missing follow-ups as "open_questions".
+
+Output MUST be strict JSON matching this schema:
+{
+  "events": [
+    {
+      "what": "Clear neutral description of what occurred",
+      "who": ["Person or Entity names"],
+      "whenText": "As stated in note or empty string",
+      "whenISO": "ISO 8601 string like 2026-10-14T23:45:00Z, or null if unknown",
+      "where": "Location string or null",
+      "confidence": 1.0
+    }
+  ],
+  "entities": [
+    {
+      "name": "Canonical name",
+      "aliases": ["Alternative names, monikers, license plates"],
+      "type": "person" | "vehicle" | "place" | "phone" | "object",
+      "role": "victim" | "suspect" | "witness" | "other",
+      "alibiStatus": "unknown" | "claimed" | "verified" | "broken",
+      "alibiDetails": "Short note on alibi if mentioned"
+    }
+  ],
+  "open_questions": [
+    "Unresolved lead, discrepancy, or missing information stated in the note"
+  ]
+}`;
+
+export async function extractIntelligence(text: string): Promise<ExtractionResult> {
+  const prompt = `Extract all events, entities, and open questions from this investigative note:\n\n"${text}"`;
+
+  // Attempt 1
+  try {
+    const rawOutput = await callLLM(prompt, EXTRACTION_SYSTEM_PROMPT, {
+      jsonMode: true,
+      temperature: 0.0,
+    });
+    const parsed = JSON.parse(cleanJsonResponse(rawOutput));
+    const validated = ExtractionResultSchema.safeParse(parsed);
+    if (validated.success) {
+      return validated.data;
+    }
+  } catch (err: any) {
+    console.warn("Extraction attempt 1 failed, retrying once...", err?.message);
+  }
+
+  // Attempt 2 (Retry on failure)
+  const retryPrompt = `Your previous output did not match the required JSON schema or was malformed.
+Re-extract strictly adhering to the schema. Output valid JSON only, no commentary.
+Investigative note:
+"${text}"`;
+
+  const rawRetry = await callLLM(retryPrompt, EXTRACTION_SYSTEM_PROMPT, {
+    jsonMode: true,
+    temperature: 0.0,
+  });
+
+  const parsedRetry = JSON.parse(cleanJsonResponse(rawRetry));
+  return ExtractionResultSchema.parse(parsedRetry);
+}
+
+// ==========================================
+// 3. Entity Merging (Match name / aliases, no dupes)
+// ==========================================
+export async function mergeEntities(
+  caseId: string,
+  extractedEntities: ExtractedEntity[],
+  noteId: string,
+  linkedEventIds: string[]
+): Promise<{ created: number; updated: number; entityNames: string[] }> {
+  const db = await getDb();
+  const entitiesCol = db.collection("entities");
+
+  const existingEntities = await entitiesCol.find({ caseId }).toArray();
+  let created = 0;
+  let updated = 0;
+  const entityNames: string[] = [];
+
+  for (const extracted of extractedEntities) {
+    const normalizedName = extracted.name.trim().toLowerCase();
+    const extractedAliases = (extracted.aliases || []).map((a) => a.trim().toLowerCase());
+    entityNames.push(extracted.name);
+
+    // Look for matching entity by name or aliases
+    const match = existingEntities.find((e) => {
+      const existingName = (e.name || "").trim().toLowerCase();
+      const existingAliases = (e.aliases || []).map((a: string) => a.trim().toLowerCase());
+
+      if (existingName === normalizedName) return true;
+      if (existingAliases.includes(normalizedName)) return true;
+      if (extractedAliases.includes(existingName)) return true;
+      return existingAliases.some((ea: string) => extractedAliases.includes(ea));
+    });
+
+    if (match) {
+      // Merge aliases (case-insensitively deduplicated)
+      const combinedAliases = Array.from(
+        new Set([
+          ...(match.aliases || []),
+          ...(extracted.aliases || []),
+          // If original name differed, save it as an alias
+          ...(match.name.toLowerCase() !== extracted.name.toLowerCase() ? [extracted.name] : []),
+        ])
+      );
+
+      // Merge noteIds and eventIds
+      const updatedNoteIds = Array.from(new Set([...(match.noteIds || []), noteId]));
+      const updatedEventIds = Array.from(new Set([...(match.eventIds || []), ...linkedEventIds]));
+
+      // Update role if newly extracted role is more informative
+      let newRole = match.role;
+      if (match.role === "other" && extracted.role !== "other") {
+        newRole = extracted.role;
+      } else if (extracted.role === "suspect" || extracted.role === "victim") {
+        newRole = extracted.role;
+      }
+
+      // Update alibiStatus if newly specified
+      const newAlibi =
+        extracted.alibiStatus && extracted.alibiStatus !== "unknown"
+          ? extracted.alibiStatus
+          : match.alibiStatus || "unknown";
+
+      await entitiesCol.updateOne(
+        { _id: match._id },
+        {
+          $set: {
+            aliases: combinedAliases,
+            role: newRole,
+            alibiStatus: newAlibi,
+            alibiDetails: extracted.alibiDetails || match.alibiDetails || "",
+            updatedAt: new Date(),
+          },
+          $addToSet: {
+            noteIds: noteId,
+            eventIds: { $each: linkedEventIds },
+          },
+        }
+      );
+      updated++;
+    } else {
+      // Create new entity
+      await entitiesCol.insertOne({
+        caseId,
+        name: extracted.name.trim(),
+        aliases: extracted.aliases || [],
+        type: extracted.type || "person",
+        role: extracted.role || "other",
+        alibiStatus: extracted.alibiStatus || "unknown",
+        alibiDetails: extracted.alibiDetails || "",
+        eventIds: linkedEventIds,
+        noteIds: [noteId],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      created++;
+    }
+  }
+
+  return { created, updated, entityNames };
+}
+
+// ==========================================
+// 4. Update Running Case Summary (Working Memory)
+// ==========================================
+export async function updateCaseSummary(
+  caseId: string,
+  previousSummary: string,
+  newNoteText: string,
+  extractedEvents: ExtractedEvent[]
+): Promise<string> {
+  const eventsList = extractedEvents.map((e) => `- ${e.what} (when: ${e.whenText || "unknown"}, where: ${e.where || "unknown"})`).join("\n");
+
+  const prompt = `You maintain the executive working memory summary for a criminal case investigation.
+Synthesize the previous summary and newly discovered facts into an updated running summary.
+STRICT RULES:
+1. Max 150 words. Concise, factual, chronological.
+2. NEVER declare guilt. Use objective statements ("evidence linked to X", "witness reported Y").
+3. Preserve key suspect leads, locations, vehicles, and timestamps.
+
+Previous Summary:
+"${previousSummary || "No prior summary."}"
+
+New Ingested Note:
+"${newNoteText}"
+
+Extracted Events:
+${eventsList || "None"}
+
+Updated Running Summary:`;
+
+  const updatedSummary = await callLLM(prompt, "You are an objective forensic case synthesizer.", {
+    temperature: 0.1,
+  });
+
+  const cleanedSummary = updatedSummary.trim();
+  const db = await getDb();
+  let query: any = { _id: caseId };
+  if (ObjectId.isValid(caseId)) query = { _id: new ObjectId(caseId) };
+
+  await db.collection("cases").updateOne(query, {
+    $set: {
+      summary: cleanedSummary,
+      updatedAt: new Date(),
+    },
+  });
+
+  return cleanedSummary;
+}
+
+// ==========================================
+// 5. Master Fact Ingestion Pipeline
+// ==========================================
+export interface IngestFactResult {
+  noteId: string;
+  rawNote: string;
+  classification: RouterClassification;
+  eventsSaved: number;
+  entitiesCreated: number;
+  entitiesUpdated: number;
+  openQuestionsSaved: number;
+  runningSummary: string;
+  extracted: ExtractionResult;
+}
+
+export async function ingestFact(
+  caseId: string,
+  authorId: string,
+  text: string
+): Promise<IngestFactResult> {
+  const db = await getDb();
+
+  // 1. Embed raw note and save to notes collection
+  const noteEmbedding = await embed(text);
+  const noteInsert = await db.collection("notes").insertOne({
+    caseId,
+    authorId,
+    text,
+    embedding: noteEmbedding,
+    createdAt: new Date(),
+  });
+  const noteId = noteInsert.insertedId.toString();
+
+  // 2. Extract structured intelligence with LLM (temp 0 + retry)
+  const extracted = await extractIntelligence(text);
+
+  // 3. Embed and store each event
+  const eventIds: string[] = [];
+  for (const event of extracted.events) {
+    const eventTextToEmbed = `${event.what}. Who: ${event.who.join(", ")}. When: ${event.whenText}. Where: ${event.where || "unknown"}`;
+    const eventEmbedding = await embed(eventTextToEmbed);
+
+    const eventInsert = await db.collection("events").insertOne({
+      caseId,
+      noteId,
+      what: event.what,
+      who: event.who,
+      whenText: event.whenText || "",
+      whenISO: event.whenISO || null,
+      where: event.where || null,
+      confidence: event.confidence ?? 1.0,
+      embedding: eventEmbedding,
+      createdAt: new Date(),
+    });
+    eventIds.push(eventInsert.insertedId.toString());
+  }
+
+  // 4. Merge entities (deduping by name/alias, linking eventIds and noteIds)
+  const mergeResult = await mergeEntities(caseId, extracted.entities, noteId, eventIds);
+
+  // 5. Store open questions
+  let openQuestionsCount = 0;
+  for (const qText of extracted.open_questions) {
+    if (qText.trim()) {
+      await db.collection("openQuestions").insertOne({
+        caseId,
+        text: qText.trim(),
+        status: "open",
+        noteId,
+        createdAt: new Date(),
+      });
+      openQuestionsCount++;
+    }
+  }
+
+  // 6. Fetch previous summary and update running working memory summary
+  let caseQuery: any = { _id: caseId };
+  if (ObjectId.isValid(caseId)) caseQuery = { _id: new ObjectId(caseId) };
+  const currentCase = await db.collection("cases").findOne(caseQuery);
+  const previousSummary = currentCase?.summary || "";
+
+  const runningSummary = await updateCaseSummary(
+    caseId,
+    previousSummary,
+    text,
+    extracted.events
+  );
+
+  return {
+    noteId,
+    rawNote: text,
+    classification: "fact",
+    eventsSaved: eventIds.length,
+    entitiesCreated: mergeResult.created,
+    entitiesUpdated: mergeResult.updated,
+    openQuestionsSaved: openQuestionsCount,
+    runningSummary,
+    extracted,
+  };
+}
+

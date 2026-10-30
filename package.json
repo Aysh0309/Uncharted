@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "setup:db": "tsx scripts/setup-db.ts",
-    "seed:users": "tsx scripts/seed-users.ts"
+    "seed:users": "tsx scripts/seed-users.ts",
+    "test:ingest": "tsx scripts/test-ingest.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

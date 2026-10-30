@@ -178,3 +178,20 @@ export async function callLLM(
 
   return text;
 }
+
+
+/**
+ * Strips markdown code block wrappers from JSON strings returned by LLMs.
+ */
+export function cleanJsonResponse(text: string): string {
+  let cleaned = text.trim();
+  if (cleaned.startsWith("```json")) {
+    cleaned = cleaned.slice(7);
+  } else if (cleaned.startsWith("```")) {
+    cleaned = cleaned.slice(3);
+  }
+  if (cleaned.endsWith("```")) {
+    cleaned = cleaned.slice(0, -3);
+  }
+  return cleaned.trim();
+}
