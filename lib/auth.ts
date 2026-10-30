@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export type UserRole = "admin" | "investigator" | "viewer";
 
@@ -12,7 +12,7 @@ export interface UserSession {
   role: UserRole;
 }
 
-const JWT_COOKIE_NAME = "casememory_token";
+export const JWT_COOKIE_NAME = "casememory_token";
 
 export function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
@@ -84,12 +84,22 @@ export async function getSessionUser(req?: NextRequest): Promise<UserSession | n
   return verifyToken(token);
 }
 
-export const AUTH_COOKIE_OPTIONS = {
-  name: JWT_COOKIE_NAME,
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "lax" as const,
-  path: "/",
-  maxAge: 7 * 24 * 60 * 60, // 7 days
-};
+export function attachAuthCookie(res: NextResponse, token: string): void {
+  res.cookies.set(JWT_COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 7 * 24 * 60 * 60, // 7 days
+  });
+}
 
+export function removeAuthCookie(res: NextResponse): void {
+  res.cookies.set(JWT_COOKIE_NAME, "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 0,
+  });
+}

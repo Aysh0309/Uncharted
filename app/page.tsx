@@ -48,6 +48,21 @@ export default function Home() {
           Every answer is strictly grounded in case memory with verified note citations.
         </p>
 
+        <div className="pt-2 flex items-center gap-3">
+          <Link
+            href="/cases"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold text-sm tracking-wide transition shadow-lg shadow-amber-500/10"
+          >
+            Launch Case Terminal
+          </Link>
+          <Link
+            href="/login"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-sm font-medium transition"
+          >
+            Sign In / Demo Roles
+          </Link>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6">
           <div className="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800/80">
             <div className="flex items-center gap-2 text-amber-400 mb-2">
