@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agentic Memory System · MongoDB Atlas Vector Search</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="/css/styles.css">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            mongo: {
+              DEFAULT: '#00ED64',
+              dark: '#001E2B',
+              slate: '#023430',
+              hover: '#00c352',
+              light: '#E3FCF7',
+              border: '#112724'
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="h-full flex flex-col font-sans antialiased overflow-hidden selection:bg-mongo selection:text-slate-950">
+
+  <!-- Top App Navigation Bar -->
+  <header class="h-14 border-b border-slate-800 bg-slate-900/90 backdrop-blur-md px-5 flex items-center justify-between shrink-0 z-30">
+    <div class="flex items-center space-x-3">
+      <!-- MongoDB Leaf / Brain Logo -->
+      <div class="w-8 h-8 rounded-lg bg-mongo/10 border border-mongo/30 flex items-center justify-center text-mongo font-bold text-lg shadow-[0_0_12px_rgba(0,237,100,0.25)]">
+        🧠
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <span class="font-bold text-slate-100 tracking-tight text-sm md:text-base">Agentic Memory System</span>
+          <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-mongo/15 text-mongo border border-mongo/30">
+            Atlas Vector Search
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center/Right Toolbar -->
+    <div class="flex items-center space-x-3">
+      <!-- Cluster Status Pill -->
+      <div id="db-status-pill" class="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-slate-800/80 border border-slate-700/80 text-xs">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span id="db-status-text" class="text-slate-300 font-mono text-[11px]">Connecting...</span>
+      </div>
+
+      <!-- Agent Switcher -->
+      <div class="flex items-center space-x-2 bg-slate-800/80 border border-slate-700/80 rounded-md px-2 py-1 text-xs">
+        <i data-lucide="bot" class="w-3.5 h-3.5 text-slate-400"></i>
+        <select id="agent-select" class="bg-transparent text-slate-200 outline-none cursor-pointer text-xs font-mono">
+          <option value="default-agent" class="bg-slate-900">agent: default-agent</option>
+          <option value="developer-agent" class="bg-slate-900">agent: developer-agent</option>
+          <option value="research-agent" class="bg-slate-900">agent: research-agent</option>
+        </select>
+      </div>
+
+      <!-- Quick Actions -->
+      <button id="btn-seed" title="Seed realistic demo memories for judging" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-md bg-mongo text-slate-950 font-semibold hover:bg-mongo-hover transition-colors text-xs shadow-sm">
+        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+        <span class="hidden md:inline">Seed Demo Data</span>
+      </button>
+
+      <button id="btn-clear-memories" title="Clear all memories for this agent" class="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-md bg-slate-800 hover:bg-rose-950/60 hover:text-rose-400 border border-slate-700/60 text-slate-300 transition-colors text-xs">
+        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+        <span class="hidden md:inline">Clear</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Split-Screen Container -->
+  <main class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+
+    <!-- ========================================== -->
+    <!-- LEFT PANEL: Conversational Chat Interface  -->
+    <!-- ========================================== -->
+    <section class="flex-1 flex flex-col border-b md:border-b-0 md:border-r border-slate-800 bg-slate-950 overflow-hidden relative">
+      
+      <!-- Chat Subheader -->
+      <div class="h-10 border-b border-slate-800/80 bg-slate-900/40 px-4 flex items-center justify-between text-xs text-slate-400 shrink-0">
+        <div class="flex items-center space-x-2">
+          <span class="w-2 h-2 rounded-full bg-mongo"></span>
+          <span>Conversational Turn & Retrieval Engine</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button id="btn-clear-chat" class="hover:text-slate-200 transition-colors flex items-center space-x-1">
+            <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+            <span>Reset Chat</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Chat Messages Scroll Area -->
+      <div id="chat-messages" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-5 scroll-smooth">
+        
+        <!-- Welcome Message from Agent -->
+        <div class="flex items-start space-x-3 max-w-3xl">
+          <div class="w-8 h-8 rounded-full bg-mongo/15 border border-mongo/30 flex items-center justify-center text-mongo shrink-0 shadow-sm">
+            <i data-lucide="bot" class="w-4 h-4"></i>
+          </div>
+          <div class="flex-1 space-y-2">
+            <div class="flex items-center space-x-2">
+              <span class="font-medium text-xs text-slate-300">Atlas Memory Agent</span>
+              <span class="text-[10px] text-slate-500">Live</span>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-sm px-4 py-3 text-sm text-slate-200 shadow-md leading-relaxed">
+              <p>Hello! I am your AI agent equipped with <strong>MongoDB Atlas Vector Search</strong> for long-term agentic memory.</p>
+              <p class="mt-2 text-xs text-slate-400">
+                💬 <strong>Try telling me:</strong> <em>"I prefer Node.js and MongoDB for backend"</em> or <em>"I switched my database to Atlas"</em>.
+                Watch the <strong>Memory Inspector</strong> on the right update live via our <strong>Agentic Write Policy</strong>!
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Quick Preset Suggestions Bar -->
+      <div class="px-4 py-2 bg-slate-900/30 border-t border-slate-800/60 overflow-x-auto whitespace-nowrap scrollbar-none flex items-center space-x-2 text-xs">
+        <span class="text-[11px] text-slate-500 shrink-0 flex items-center space-x-1">
+          <i data-lucide="lightbulb" class="w-3 h-3 text-amber-400"></i>
+          <span>Try:</span>
+        </span>
+        <button class="preset-btn px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-300 transition-colors shrink-0">
+          I prefer Express and Node.js for my backend
+        </button>
+        <button class="preset-btn px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-300 transition-colors shrink-0">
+          I switched to Python FastAPI instead
+        </button>
+        <button class="preset-btn px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-300 transition-colors shrink-0">
+          What backend framework do I prefer?
+        </button>
+        <button class="preset-btn px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-300 transition-colors shrink-0">
+          I am building an Agentic Memory System for MongoDB Hackathon
+        </button>
+      </div>
+
+      <!-- Chat Input Area -->
+      <div class="p-4 bg-slate-900/70 border-t border-slate-800 shrink-0">
+        <form id="chat-form" class="relative flex items-end space-x-2">
+          <div class="relative flex-1">
+            <textarea
+              id="user-input"
+              rows="1"
+              placeholder="Tell me a preference, ask a question, or update a past fact..."
+              class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-4 pr-10 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-mongo/60 focus:ring-1 focus:ring-mongo/60 resize-none max-h-32 shadow-inner"
+            ></textarea>
+            <div class="absolute right-3 bottom-3 text-[10px] text-slate-500 hidden sm:block">
+              ↵ Enter
+            </div>
+          </div>
+          <button
+            type="submit"
+            id="send-btn"
+            class="h-11 px-4 rounded-xl bg-mongo text-slate-950 font-semibold hover:bg-mongo-hover transition-colors flex items-center justify-center shrink-0 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(0,237,100,0.2)]"
+          >
+            <i data-lucide="send" class="w-4 h-4"></i>
+          </button>
+        </form>
+      </div>
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- RIGHT PANEL: Live MongoDB Memory Inspector -->
+    <!-- ========================================== -->
+    <section class="w-full md:w-[480px] lg:w-[540px] flex flex-col bg-slate-900/50 backdrop-blur-md overflow-hidden shrink-0 border-l border-slate-800">
+      
+      <!-- Inspector Header -->
+      <div class="p-4 border-b border-slate-800 bg-slate-900/80 flex items-center justify-between shrink-0">
+        <div class="flex items-center space-x-2">
+          <div class="w-6 h-6 rounded-md bg-mongo/10 border border-mongo/30 flex items-center justify-center text-mongo text-xs">
+            <i data-lucide="database" class="w-3.5 h-3.5"></i>
+          </div>
+          <div>
+            <h2 class="font-bold text-sm text-slate-100 flex items-center space-x-2">
+              <span>Live MongoDB Memory Inspector</span>
+              <span id="memory-count-badge" class="px-2 py-0.2 rounded-full bg-slate-800 text-mongo text-[11px] font-mono border border-slate-700">
+                0 facts
+              </span>
+            </h2>
+          </div>
+        </div>
+
+        <button id="btn-refresh-memories" title="Refresh stored memories" class="p-1.5 rounded-md hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Real-time Pipeline Metric Bar -->
+      <div class="grid grid-cols-3 border-b border-slate-800 bg-slate-950/60 p-2 text-center text-xs divide-x divide-slate-800/80 shrink-0">
+        <div class="px-2">
+          <div class="text-[10px] text-slate-500 uppercase tracking-wider">Vector Search</div>
+          <div id="stat-latency" class="font-mono text-slate-200 font-semibold text-xs mt-0.5">-- ms</div>
+        </div>
+        <div class="px-2">
+          <div class="text-[10px] text-slate-500 uppercase tracking-wider">Write Policy</div>
+          <div id="stat-write-action" class="font-mono text-mongo text-xs font-semibold mt-0.5">Idle</div>
+        </div>
+        <div class="px-2">
+          <div class="text-[10px] text-slate-500 uppercase tracking-wider">Index Engine</div>
+          <div class="font-mono text-emerald-400 text-xs font-semibold mt-0.5">vector_index</div>
+        </div>
+      </div>
+
+      <!-- Filter Tabs -->
+      <div class="px-4 py-2 border-b border-slate-800 bg-slate-900/40 flex items-center space-x-1 overflow-x-auto scrollbar-none text-xs shrink-0">
+        <button class="filter-tab active px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors" data-filter="all">All</button>
+        <button class="filter-tab px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors" data-filter="preference">Preferences</button>
+        <button class="filter-tab px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors" data-filter="project">Projects</button>
+        <button class="filter-tab px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors" data-filter="fact">Facts</button>
+        <button class="filter-tab px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors" data-filter="constraint">Constraints</button>
+      </div>
+
+      <!-- Memory Cards Container -->
+      <div id="memories-list" class="flex-1 overflow-y-auto p-4 space-y-3">
+        <!-- Dynamic Memory Cards Injected via JS -->
+        <div id="memories-empty-state" class="h-64 flex flex-col items-center justify-center text-center p-6 text-slate-500">
+          <i data-lucide="inbox" class="w-10 h-10 mb-2 opacity-30"></i>
+          <p class="text-sm font-medium text-slate-400">No persistent memories stored yet</p>
+          <p class="text-xs text-slate-500 mt-1 max-w-xs">Send a message to teach the agent or click "Seed Demo Data" above to view live Atlas memories.</p>
+        </div>
+      </div>
+
+      <!-- Collapsible Live Atlas Pipeline Event Log -->
+      <div class="border-t border-slate-800 bg-slate-950 shrink-0">
+        <div id="toggle-pipeline-log" class="px-4 py-2 flex items-center justify-between cursor-pointer hover:bg-slate-900/80 transition-colors text-xs text-slate-400 select-none">
+          <div class="flex items-center space-x-2">
+            <i data-lucide="terminal" class="w-3.5 h-3.5 text-mongo"></i>
+            <span class="font-mono text-[11px] text-slate-300">Atlas $vectorSearch & Write Log</span>
+          </div>
+          <i id="pipeline-chevron" data-lucide="chevron-up" class="w-3.5 h-3.5 transition-transform"></i>
+        </div>
+        <div id="pipeline-log-content" class="h-28 overflow-y-auto p-3 font-mono text-[11px] text-slate-400 space-y-1 bg-slate-950/90 border-t border-slate-800/60">
+          <div class="text-slate-500">[System] Pipeline initialized. Listening for MongoDB Vector Search events...</div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 px-4 py-3 rounded-xl bg-slate-900 border border-mongo/40 text-slate-200 text-xs shadow-2xl flex items-center space-x-3 pointer-events-none">
+    <i data-lucide="check-circle" class="w-4 h-4 text-mongo shrink-0"></i>
+    <span id="toast-message">Notification</span>
+  </div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
