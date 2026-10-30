@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 10, 15, 30;
+  --background-end-rgb: 3, 7, 18;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: radial-gradient(circle at top, rgb(var(--background-start-rgb)), rgb(var(--background-end-rgb)));
+  min-height: 100vh;
+}
+
