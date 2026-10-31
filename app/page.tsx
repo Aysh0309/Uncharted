@@ -10,11 +10,8 @@ export default function Home() {
             <span className="material-symbols-outlined text-[20px]">policy</span>
           </div>
           <div>
-            <h1 className="font-headline font-bold text-lg text-primary tracking-tight flex items-center gap-2">
+            <h1 className="font-headline font-bold text-lg text-primary tracking-tight">
               CaseMemory
-              <span className="font-label text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed">
-                UNCHARTED 2026
-              </span>
             </h1>
             <p className="font-sans text-xs text-on-surface-variant">
               Agentic Memory for Criminal Investigations
@@ -23,12 +20,11 @@ export default function Home() {
         </div>
 
         <Link
-          href="/api/health"
-          target="_blank"
-          className="inline-flex items-center gap-1.5 font-label text-xs font-semibold px-3 py-1.5 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-colors border border-outline-variant/20"
+          href="/login"
+          className="inline-flex items-center gap-1.5 font-label text-xs font-semibold px-3.5 py-1.5 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface transition-colors border border-outline-variant/20"
         >
-          <span className="w-2 h-2 rounded-full bg-secondary" />
-          <span>GET /api/health</span>
+          <span>Sign In</span>
+          <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
         </Link>
       </header>
 
@@ -103,8 +99,8 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="pt-8 border-t border-outline-variant/30 font-label text-xs text-on-surface-variant flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div>Next.js 14 • MongoDB Atlas • Google Gemini • Material Editorial Theme</div>
-        <div className="text-outline">Clean &amp; Minimalist</div>
+        <div>CaseMemory — Agentic Memory for Criminal Investigations</div>
+        <div className="text-on-surface-variant">Confidential Evidentiary Terminal</div>
       </footer>
     </main>
   );
