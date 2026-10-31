@@ -50,6 +50,16 @@ interface EvidentiaryGap {
   noteId?: string;
 }
 
+interface DiscrepancyItem {
+  entityType: string;
+  field: string;
+  existingValue: string;
+  newValue: string;
+  entityName: string;
+  description: string;
+  resolutionOptions: string[];
+}
+
 interface ChatMessage {
   id: string;
   sender: "user" | "assistant";
@@ -63,6 +73,8 @@ interface ChatMessage {
     entitiesCount?: number;
     openQuestionsSaved?: number;
   };
+  discrepancies?: DiscrepancyItem[];
+  confirmationPrompt?: string;
 }
 
 export default function CaseWorkspacePage() {
@@ -85,7 +97,16 @@ export default function CaseWorkspacePage() {
 
   // Toggle States
   const [showSummary, setShowSummary] = useState(false);
-  const [activeRightTab, setActiveRightTab] = useState<"timeline" | "suspects" | "gaps">("timeline");
+  const [activeRightTab, setActiveRightTab] = useState<"timeline" | "suspects" | "entities" | "gaps">("suspects");
+
+  // Entity Quick Editor Modal State
+  const [editingEntity, setEditingEntity] = useState<CaseEntity | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editRole, setEditRole] = useState<string>("other");
+  const [editAlibiStatus, setEditAlibiStatus] = useState<string>("unknown");
+  const [editAlibiDetails, setEditAlibiDetails] = useState("");
+  const [editAliases, setEditAliases] = useState("");
+  const [savingEntity, setSavingEntity] = useState(false);
 
   // Chat State
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -213,7 +234,7 @@ export default function CaseWorkspacePage() {
         const assistantMsg: ChatMessage = {
           id: `msg-ast-${Date.now()}`,
           sender: "assistant",
-          text: `Extracted ${data.eventsSaved} event(s) and synchronized ${
+          text: data.message || `Extracted ${data.eventsSaved} event(s) and synchronized ${
             data.entitiesCreated + data.entitiesUpdated
           } entity record(s) into case memory.`,
           type: "fact",
@@ -222,6 +243,8 @@ export default function CaseWorkspacePage() {
             eventsSaved: data.eventsSaved,
             entitiesCount: data.entitiesCreated + data.entitiesUpdated,
           },
+          discrepancies: data.discrepancies,
+          confirmationPrompt: data.confirmationPrompt,
           timestamp: new Date().toISOString(),
         };
         setMessages((prev) => [...prev, assistantMsg]);
@@ -245,6 +268,8 @@ export default function CaseWorkspacePage() {
           type: "both",
           noteId: data.ingested?.noteId,
           citations: data.citations,
+          discrepancies: data.discrepancies,
+          confirmationPrompt: data.confirmationPrompt,
           timestamp: new Date().toISOString(),
         };
         setMessages((prev) => [...prev, assistantMsg]);
@@ -256,6 +281,94 @@ export default function CaseWorkspacePage() {
       addToast("error", err.message || "Execution error");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const openEntityEditor = (ent: CaseEntity) => {
+    setEditingEntity(ent);
+    setEditName(ent.name);
+    setEditRole(ent.role || "other");
+    setEditAlibiStatus(ent.alibiStatus || "unknown");
+    setEditAlibiDetails(ent.alibiDetails || "");
+    setEditAliases((ent.aliases || []).join(", "));
+  };
+
+  const handleSaveEntity = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingEntity) return;
+    try {
+      setSavingEntity(true);
+      const res = await fetch(`/api/cases/${caseId}/entities`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          entityId: editingEntity.id,
+          name: editName,
+          role: editRole,
+          alibiStatus: editAlibiStatus,
+          alibiDetails: editAlibiDetails,
+          aliases: editAliases.split(",").map((a) => a.trim()).filter(Boolean),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to update entity");
+
+      addToast("success", `Updated ${editName} (Alibi: ${editAlibiStatus})`);
+      setEditingEntity(null);
+      await loadCaseData();
+    } catch (err: any) {
+      addToast("error", err.message || "Update failed");
+    } finally {
+      setSavingEntity(false);
+    }
+  };
+
+  const handleConfirmDiscrepancy = async (d: DiscrepancyItem, chosenOption?: string) => {
+    try {
+      if (d.field === "alibiStatus") {
+        const targetEntity = entities.find(
+          (e) => e.name.toLowerCase() === d.entityName.toLowerCase()
+        );
+        if (targetEntity) {
+          const res = await fetch(`/api/cases/${caseId}/entities`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              entityId: targetEntity.id,
+              alibiStatus: d.newValue,
+            }),
+          });
+          if (!res.ok) throw new Error("Failed to update alibi");
+          addToast("success", `Updated ${d.entityName}'s alibi to "${d.newValue}"`);
+          await loadCaseData();
+          return;
+        }
+      }
+
+      const targetEntity = entities.find(
+        (e) =>
+          e.name.toLowerCase() === d.existingValue.toLowerCase() ||
+          e.name.toLowerCase() === d.entityName.toLowerCase()
+      );
+      if (targetEntity) {
+        const res = await fetch(`/api/cases/${caseId}/entities`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            entityId: targetEntity.id,
+            name: d.newValue,
+            aliases: [...(targetEntity.aliases || []), d.existingValue],
+          }),
+        });
+        if (!res.ok) throw new Error("Failed to update discrepancy record");
+        addToast("success", `Confirmed: Updated "${d.existingValue}" to "${d.newValue}"`);
+        await loadCaseData();
+      } else {
+        // Send a clarification note
+        setInputText(`Clarification update: Replace "${d.existingValue}" with "${d.newValue}".`);
+      }
+    } catch (err: any) {
+      addToast("error", err.message || "Confirmation failed");
     }
   };
 
@@ -468,6 +581,40 @@ export default function CaseWorkspacePage() {
                         </div>
                       )}
 
+                      {/* Evidentiary Discrepancy & Re-Ask Confirmation Box */}
+                      {m.confirmationPrompt && (
+                        <div className="p-3.5 bg-secondary-container/90 rounded-2xl border border-secondary text-xs text-on-secondary-container space-y-2.5 shadow-sm animate-fadeIn">
+                          <div className="flex items-center gap-2 font-bold text-primary font-label">
+                            <span className="material-symbols-outlined text-error text-[18px]">
+                              warning
+                            </span>
+                            <span>Evidentiary Discrepancy Detected — Confirmation Required</span>
+                          </div>
+                          <p className="font-sans leading-relaxed text-on-surface font-medium">
+                            {m.confirmationPrompt}
+                          </p>
+                          {m.discrepancies && m.discrepancies.length > 0 && (
+                            <div className="pt-1 flex flex-wrap gap-2">
+                              {m.discrepancies.map((d, dIdx) => (
+                                <button
+                                  key={`disc-btn-${dIdx}`}
+                                  type="button"
+                                  onClick={() => handleConfirmDiscrepancy(d)}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary hover:bg-primary-container text-on-primary font-label text-[11px] font-bold shadow-xs transition-colors cursor-pointer"
+                                >
+                                  <span className="material-symbols-outlined text-[14px]">check</span>
+                                  <span>
+                                    {d.field === "alibiStatus"
+                                      ? `Confirm: Update ${d.entityName}'s alibi to "${d.newValue}"`
+                                      : `Confirm: Replace "${d.existingValue}" with "${d.newValue}"`}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {/* Formatted Evidentiary Text with Clickable Citations */}
                       <div className="text-sm text-on-surface leading-relaxed">
                         <FormattedEvidentiaryText
@@ -522,7 +669,7 @@ export default function CaseWorkspacePage() {
             <div className="flex items-center gap-1 w-full">
               <button
                 onClick={() => setActiveRightTab("timeline")}
-                className={`flex-1 py-1.5 px-2 rounded-xl font-label text-xs font-bold transition-all ${
+                className={`flex-1 py-1.5 px-1.5 rounded-xl font-label text-[11px] font-bold transition-all ${
                   activeRightTab === "timeline"
                     ? "bg-primary text-on-primary shadow-xs"
                     : "text-on-surface-variant hover:bg-surface-container"
@@ -532,7 +679,7 @@ export default function CaseWorkspacePage() {
               </button>
               <button
                 onClick={() => setActiveRightTab("suspects")}
-                className={`flex-1 py-1.5 px-2 rounded-xl font-label text-xs font-bold transition-all ${
+                className={`flex-1 py-1.5 px-1.5 rounded-xl font-label text-[11px] font-bold transition-all ${
                   activeRightTab === "suspects"
                     ? "bg-primary text-on-primary shadow-xs"
                     : "text-on-surface-variant hover:bg-surface-container"
@@ -541,8 +688,18 @@ export default function CaseWorkspacePage() {
                 Suspects ({suspects.length})
               </button>
               <button
+                onClick={() => setActiveRightTab("entities")}
+                className={`flex-1 py-1.5 px-1.5 rounded-xl font-label text-[11px] font-bold transition-all ${
+                  activeRightTab === "entities"
+                    ? "bg-primary text-on-primary shadow-xs"
+                    : "text-on-surface-variant hover:bg-surface-container"
+                }`}
+              >
+                Entities ({entities.length})
+              </button>
+              <button
                 onClick={() => setActiveRightTab("gaps")}
-                className={`flex-1 py-1.5 px-2 rounded-xl font-label text-xs font-bold transition-all ${
+                className={`flex-1 py-1.5 px-1.5 rounded-xl font-label text-[11px] font-bold transition-all ${
                   activeRightTab === "gaps"
                     ? "bg-primary text-on-primary shadow-xs"
                     : "text-on-surface-variant hover:bg-surface-container"
@@ -630,12 +787,33 @@ export default function CaseWorkspacePage() {
                       </span>
                     </div>
 
-                    {/* Alibi Status Badge */}
-                    <div className="flex items-center gap-2 font-label text-[11px]">
-                      <span className="text-on-surface-variant">Alibi Status:</span>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase ${getAlibiBadge(s.breakdown.alibi.status)}`}>
-                        {s.breakdown.alibi.status}
-                      </span>
+                    {/* Alibi Status Badge & Edit Action */}
+                    <div className="flex items-center justify-between font-label text-[11px]">
+                      <div className="flex items-center gap-2">
+                        <span className="text-on-surface-variant">Alibi Status:</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase ${getAlibiBadge(s.breakdown.alibi.status)}`}>
+                          {s.breakdown.alibi.status}
+                        </span>
+                      </div>
+                      {!isViewer && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const matchedEnt = entities.find(
+                              (e) =>
+                                e.name.toLowerCase() === s.name.toLowerCase() ||
+                                (e.aliases || []).some((a) => a.toLowerCase() === s.name.toLowerCase())
+                            );
+                            if (matchedEnt) {
+                              openEntityEditor(matchedEnt);
+                            }
+                          }}
+                          className="text-[10px] text-secondary hover:text-primary font-bold flex items-center gap-1 hover:underline cursor-pointer"
+                        >
+                          <span className="material-symbols-outlined text-[13px]">edit</span>
+                          <span>Update Alibi</span>
+                        </button>
+                      )}
                     </div>
 
                     {/* Explainable Formula Breakdown (Direct from Snitch Inspector) */}
@@ -666,7 +844,79 @@ export default function CaseWorkspacePage() {
             </div>
           )}
 
-          {/* TAB 3: Gaps & Open Questions */}
+          {/* TAB 3: All Tracked Entities */}
+          {activeRightTab === "entities" && (
+            <div className="flex flex-col gap-3">
+              {entities.length === 0 ? (
+                <div className="p-8 text-center text-xs text-on-surface-variant rounded-2xl bg-surface-container-lowest border border-outline-variant/30">
+                  No entities extracted or tracked yet. Ingest facts to populate.
+                </div>
+              ) : (
+                entities.map((ent) => (
+                  <div
+                    key={ent.id}
+                    className="p-3.5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-subtle space-y-2 hover:border-secondary/40 transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-headline font-bold text-xs text-primary">
+                          {ent.name}
+                        </span>
+                        <span className="font-label text-[10px] px-1.5 py-0.2 rounded bg-surface-container text-on-surface-variant uppercase font-medium">
+                          {ent.type}
+                        </span>
+                        <span className="font-label text-[10px] px-1.5 py-0.2 rounded bg-secondary-container text-on-secondary-container font-semibold">
+                          {ent.role}
+                        </span>
+                      </div>
+                      {!isViewer && (
+                        <button
+                          type="button"
+                          onClick={() => openEntityEditor(ent)}
+                          className="p-1 rounded-lg hover:bg-surface-container text-secondary transition-colors cursor-pointer"
+                          title="Edit entity name, role, or alibi"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">edit</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Alibi display for persons */}
+                    {ent.type === "person" && (
+                      <div className="flex items-center gap-2 font-label text-[11px] pt-0.5">
+                        <span className="text-on-surface-variant">Alibi Status:</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase ${getAlibiBadge(ent.alibiStatus)}`}>
+                          {ent.alibiStatus}
+                        </span>
+                        {ent.alibiDetails && (
+                          <span className="text-[10px] text-on-surface-variant truncate max-w-[160px]" title={ent.alibiDetails}>
+                            {ent.alibiDetails}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Aliases display */}
+                    {ent.aliases && ent.aliases.length > 0 && (
+                      <div className="flex flex-wrap items-center gap-1 pt-1 border-t border-outline-variant/20">
+                        <span className="font-label text-[9px] text-on-surface-variant">Aliases:</span>
+                        {ent.aliases.map((a) => (
+                          <span
+                            key={a}
+                            className="font-label text-[9px] px-1.5 py-0.2 rounded bg-surface-container text-on-surface font-medium"
+                          >
+                            {a}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {/* TAB 4: Gaps & Open Questions */}
           {activeRightTab === "gaps" && (
             <div className="flex flex-col gap-3">
               {gaps.length === 0 ? (
@@ -758,6 +1008,119 @@ export default function CaseWorkspacePage() {
 
       {/* Toast Notification Container */}
       <ToastContainer toasts={toasts} onDismiss={(id) => setToasts((prev) => prev.filter((t) => t.id !== id))} />
+
+      {/* Quick Entity & Alibi Editor Modal */}
+      {editingEntity && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-md bg-surface-container-lowest border border-outline-variant/30 rounded-3xl p-6 shadow-float space-y-4">
+            <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-secondary-container flex items-center justify-center text-on-secondary-container">
+                  <span className="material-symbols-outlined text-[20px]">manage_accounts</span>
+                </div>
+                <div>
+                  <h3 className="font-headline font-bold text-sm text-primary">
+                    Update Entity & Alibi Record
+                  </h3>
+                  <p className="font-sans text-[11px] text-on-surface-variant">
+                    Modify alibi status, fix name typos, or edit aliases
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingEntity(null)}
+                className="p-1 rounded-full hover:bg-surface-container text-on-surface-variant transition-colors cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEntity} className="space-y-3.5">
+              <div className="space-y-1">
+                <label className="font-label text-xs font-bold text-on-surface">Entity Name (Correct Typos)</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  required
+                  placeholder="e.g. Vikram Malhotra"
+                  className="w-full bg-surface-container-low border border-outline-variant/40 rounded-xl px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary font-sans"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-label text-xs font-bold text-on-surface">Role</label>
+                  <select
+                    value={editRole}
+                    onChange={(e) => setEditRole(e.target.value)}
+                    className="w-full bg-surface-container-low border border-outline-variant/40 rounded-xl px-2.5 py-2 text-xs text-on-surface focus:outline-none focus:border-primary font-label"
+                  >
+                    <option value="suspect">Suspect</option>
+                    <option value="witness">Witness</option>
+                    <option value="victim">Victim</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-label text-xs font-bold text-on-surface">Alibi Status</label>
+                  <select
+                    value={editAlibiStatus}
+                    onChange={(e) => setEditAlibiStatus(e.target.value)}
+                    className="w-full bg-surface-container-low border border-outline-variant/40 rounded-xl px-2.5 py-2 text-xs text-on-surface focus:outline-none focus:border-primary font-label font-bold"
+                  >
+                    <option value="unknown">Unknown</option>
+                    <option value="claimed">Claimed (Unverified)</option>
+                    <option value="verified">Verified (Corroborated)</option>
+                    <option value="broken">Broken (Contradicted)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-label text-xs font-bold text-on-surface">Alibi Details / Evidence Discrepancy</label>
+                <textarea
+                  rows={2}
+                  value={editAlibiDetails}
+                  onChange={(e) => setEditAlibiDetails(e.target.value)}
+                  placeholder="e.g. CCTV footage refutes his claimed presence; toll tag records him at BKC at 11:42 PM"
+                  className="w-full bg-surface-container-low border border-outline-variant/40 rounded-xl px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary font-sans resize-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-label text-xs font-bold text-on-surface">Aliases & Monikers (comma separated)</label>
+                <input
+                  type="text"
+                  value={editAliases}
+                  onChange={(e) => setEditAliases(e.target.value)}
+                  placeholder="e.g. Vicky, Bunty, DL-10-CB-3190"
+                  className="w-full bg-surface-container-low border border-outline-variant/40 rounded-xl px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary font-sans"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-outline-variant/20">
+                <button
+                  type="button"
+                  onClick={() => setEditingEntity(null)}
+                  className="px-4 py-2 font-label text-xs text-on-surface-variant hover:text-on-surface font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingEntity}
+                  className="px-5 py-2 rounded-full bg-primary hover:bg-primary-container text-on-primary font-label text-xs font-bold disabled:opacity-50 shadow-sm cursor-pointer"
+                >
+                  {savingEntity ? "Saving..." : "Save to Database"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

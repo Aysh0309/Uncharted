@@ -1,4 +1,12 @@
 import { MongoClient, Db } from "mongodb";
+import dns from "node:dns";
+
+// Fix querySrv EBADRESP on local networks/ISPs by using reliable public DNS (Google & Cloudflare)
+try {
+  dns.setServers(["8.8.8.8", "1.1.1.1", "8.8.4.4"]);
+} catch {
+  // Ignore in restricted environments
+}
 
 declare global {
   // eslint-disable-next-line no-var

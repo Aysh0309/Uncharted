@@ -94,13 +94,17 @@ export async function POST(
       return NextResponse.json({
         status: "ok",
         type: "fact",
-        message: `Fact successfully ingested and linked under Note #${ingestResult.noteId}`,
+        message: ingestResult.confirmationPrompt
+          ? `Fact ingested (Note #${ingestResult.noteId.slice(-6)}). ${ingestResult.confirmationPrompt}`
+          : `Fact successfully ingested and linked under Note #${ingestResult.noteId}`,
         noteId: ingestResult.noteId,
         eventsSaved: ingestResult.eventsSaved,
         entitiesCreated: ingestResult.entitiesCreated,
         entitiesUpdated: ingestResult.entitiesUpdated,
         openQuestionsSaved: ingestResult.openQuestionsSaved,
         runningSummary: ingestResult.runningSummary,
+        discrepancies: ingestResult.discrepancies || [],
+        confirmationPrompt: ingestResult.confirmationPrompt,
         extracted: {
           events: ingestResult.extracted.events,
           entities: ingestResult.extracted.entities,
@@ -138,9 +142,13 @@ export async function POST(
       status: "ok",
       type: "both",
       message: ingestResult
-        ? `Fact ingested (Note #${ingestResult.noteId}) and question answered from case memory.`
+        ? (ingestResult.confirmationPrompt
+            ? `Fact ingested (Note #${ingestResult.noteId.slice(-6)}). ${ingestResult.confirmationPrompt}`
+            : `Fact ingested (Note #${ingestResult.noteId}) and question answered from case memory.`)
         : "Question answered from case memory (Viewer mode: fact ingestion skipped).",
       ingested: ingestResult,
+      discrepancies: ingestResult?.discrepancies || [],
+      confirmationPrompt: ingestResult?.confirmationPrompt,
       queryId: answerResult.queryId,
       question: answerResult.question,
       answer: answerResult.answer,

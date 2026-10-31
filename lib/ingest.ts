@@ -2,6 +2,12 @@ import { ObjectId } from "mongodb";
 import { z } from "zod";
 import { getDb } from "./db";
 import { callLLM, embed, cleanJsonResponse } from "./llm";
+import {
+  matchEntity,
+  detectContradictions,
+  normalizeEntityName,
+  DiscrepancyReport,
+} from "./entity-matcher";
 
 // ==========================================
 // Schemas for LLM Output
@@ -104,8 +110,16 @@ STRICT EVIDENTIARY RULES:
 1. Extract ONLY facts explicitly stated in the note. NEVER extrapolate, assume, or fabricate.
 2. For missing time or place: set whenISO to null, where to null. Never guess dates or addresses.
 3. NEVER declare anyone guilty. If evidence points to an individual, designate role as "suspect" or "other" and state "evidence linked to X" objectively.
-4. If an individual claims an alibi or whereabouts, record alibiStatus ("claimed", "verified", "broken", or "unknown").
-5. Identify any obvious gaps, unverified claims, or missing follow-ups as "open_questions".
+4. ALIBI CLASSIFICATION GUIDELINES:
+   - "broken": If evidence, CCTV footage, toll records, cell tower CDR, badge logs, or contradictory witness statements refute, contradict, or break the claimed alibi/whereabouts.
+   - "verified": If independent records, electronic logs, travel tickets, or corroborated witness testimony confirm the person was genuinely elsewhere.
+   - "claimed": If the person asserts, claims, or reports an alibi or whereabouts that has NOT yet been independently confirmed or broken.
+   - "unknown": If no alibi or whereabouts are mentioned for that person.
+   Record the specific alibi details or discrepancy in "alibiDetails".
+5. NAMING & ENTITY RESOLUTION:
+   - Extract canonical names (e.g. "Vikram Malhotra") and store all nicknames, monikers, or variations (e.g. "Vicky", "D-Money") in "aliases".
+   - If a note provides updated details about an existing known person (such as alibi or role change), extract the person with their new role and alibiStatus.
+6. Identify any obvious gaps, unverified claims, contradictory statements, or missing follow-ups as "open_questions".
 
 Output MUST be strict JSON matching this schema:
 {
@@ -169,7 +183,7 @@ ${wrapUntrustedData(text)}`;
 }
 
 // ==========================================
-// 3. Entity Merging (Match name / aliases, no dupes)
+// 3. Entity Merging (Fuzzy Match, Typo Tolerance, No Dupes)
 // ==========================================
 export async function mergeEntities(
   caseId: string,
@@ -186,44 +200,45 @@ export async function mergeEntities(
   const entityNames: string[] = [];
 
   for (const extracted of extractedEntities) {
-    const normalizedName = extracted.name.trim().toLowerCase();
-    const extractedAliases = (extracted.aliases || []).map((a) => a.trim().toLowerCase());
     entityNames.push(extracted.name);
 
-    // Look for matching entity by name or aliases
-    const match = existingEntities.find((e) => {
-      const existingName = (e.name || "").trim().toLowerCase();
-      const existingAliases = (e.aliases || []).map((a: string) => a.trim().toLowerCase());
-
-      if (existingName === normalizedName) return true;
-      if (existingAliases.includes(normalizedName)) return true;
-      if (extractedAliases.includes(existingName)) return true;
-      return existingAliases.some((ea: string) => extractedAliases.includes(ea));
-    });
+    // Use intelligent typo-tolerant & case-insensitive entity matcher
+    const matchRes = matchEntity(extracted, existingEntities as any[]);
+    const match: any = matchRes.match;
 
     if (match) {
       // Merge aliases (case-insensitively deduplicated)
+      const existingNameLower = (match.name || "").trim().toLowerCase();
+      const extractedNameTrimmed = extracted.name.trim();
+      const shouldAddExtractedAsAlias =
+        extractedNameTrimmed.toLowerCase() !== existingNameLower &&
+        matchRes.similarity >= 0.80;
+
       const combinedAliases = Array.from(
         new Set([
           ...(match.aliases || []),
           ...(extracted.aliases || []),
-          ...(match.name.toLowerCase() !== extracted.name.toLowerCase() ? [extracted.name] : []),
+          ...(shouldAddExtractedAsAlias ? [extractedNameTrimmed] : []),
         ])
       );
 
-      // Update role if newly extracted role is more informative
+      // Update role if newly extracted role is more specific/informative
       let newRole = match.role;
       if (match.role === "other" && extracted.role !== "other") {
         newRole = extracted.role;
-      } else if (extracted.role === "suspect" || extracted.role === "victim") {
+      } else if (extracted.role === "suspect" || extracted.role === "victim" || extracted.role === "witness") {
         newRole = extracted.role;
       }
 
       // Update alibiStatus if newly specified
-      const newAlibi =
-        extracted.alibiStatus && extracted.alibiStatus !== "unknown"
-          ? extracted.alibiStatus
-          : match.alibiStatus || "unknown";
+      let newAlibi = match.alibiStatus || "unknown";
+      if (extracted.alibiStatus && extracted.alibiStatus !== "unknown") {
+        newAlibi = extracted.alibiStatus;
+      }
+
+      // Update alibiDetails
+      const newAlibiDetails =
+        extracted.alibiDetails?.trim() || match.alibiDetails || "";
 
       await entitiesCol.updateOne(
         { _id: match._id },
@@ -232,7 +247,7 @@ export async function mergeEntities(
             aliases: combinedAliases,
             role: newRole,
             alibiStatus: newAlibi,
-            alibiDetails: extracted.alibiDetails || match.alibiDetails || "",
+            alibiDetails: newAlibiDetails,
             updatedAt: new Date(),
           },
           $addToSet: {
@@ -241,10 +256,17 @@ export async function mergeEntities(
           },
         }
       );
+
+      // Keep in-memory existingEntities array updated for subsequent entities in this same note
+      match.aliases = combinedAliases;
+      match.role = newRole;
+      match.alibiStatus = newAlibi;
+      match.alibiDetails = newAlibiDetails;
+
       updated++;
     } else {
       // Create new entity
-      await entitiesCol.insertOne({
+      const newDoc = {
         caseId,
         name: extracted.name.trim(),
         aliases: extracted.aliases || [],
@@ -256,7 +278,10 @@ export async function mergeEntities(
         noteIds: [noteId],
         createdAt: new Date(),
         updatedAt: new Date(),
-      });
+      };
+
+      const insertRes = await entitiesCol.insertOne(newDoc);
+      existingEntities.push({ ...newDoc, _id: insertRes.insertedId } as any);
       created++;
     }
   }
@@ -338,27 +363,37 @@ export interface IngestFactResult {
   openQuestionsSaved: number;
   runningSummary: string;
   extracted: ExtractionResult;
+  discrepancies?: DiscrepancyReport[];
+  confirmationPrompt?: string;
 }
 
 export async function ingestFact(
   caseId: string,
   authorId: string,
   text: string,
-  precomputedEmbedding?: number[],
+  precomputedEmbeddingOrDate?: number[] | Date,
   createdAt?: Date
 ): Promise<IngestFactResult> {
   const db = await getDb();
-  const noteDate = createdAt || new Date();
+  let precomputedEmbedding: number[] | undefined;
+  let noteDate = createdAt || new Date();
+
+  if (precomputedEmbeddingOrDate instanceof Date) {
+    noteDate = precomputedEmbeddingOrDate;
+  } else if (Array.isArray(precomputedEmbeddingOrDate)) {
+    precomputedEmbedding = precomputedEmbeddingOrDate;
+  }
 
   // 1. Embed raw note (reuse precomputed embedding if provided from parallel router phase)
   const noteEmbeddingPromise = precomputedEmbedding && precomputedEmbedding.length > 0
     ? Promise.resolve(precomputedEmbedding)
     : embed(text);
 
-  // 2. Run Note Embedding and Extraction concurrently
-  const [noteEmbedding, extracted] = await Promise.all([
+  // 2. Fetch existing entities and run Note Embedding + Extraction concurrently
+  const [noteEmbedding, extracted, existingEntities] = await Promise.all([
     noteEmbeddingPromise,
     extractIntelligence(text),
+    db.collection("entities").find({ caseId }).toArray(),
   ]);
 
   // Insert raw note
@@ -371,7 +406,14 @@ export async function ingestFact(
   });
   const noteId = noteInsert.insertedId.toString();
 
-  // 3. Generate all event embeddings concurrently via Promise.all
+  // 3. Detect any evidentiary contradictions or discrepancies against prior case facts
+  const discrepancies = detectContradictions(
+    extracted.entities,
+    existingEntities as any,
+    text
+  );
+
+  // 4. Generate all event embeddings concurrently via Promise.all
   const eventEmbeddings = await Promise.all(
     extracted.events.map((event) => {
       const eventTextToEmbed = `${event.what}. Who: ${event.who.join(", ")}. When: ${event.whenText}. Where: ${event.where || "unknown"}`;
@@ -399,15 +441,16 @@ export async function ingestFact(
     eventIds.push(eventInsert.insertedId.toString());
   }
 
-  // 4. Fetch previous case summary for synthesis
+  // 5. Fetch previous case summary for synthesis
   let caseQuery: any = { _id: caseId };
   if (ObjectId.isValid(caseId)) caseQuery = { _id: new ObjectId(caseId) };
   const currentCase = await db.collection("cases").findOne(caseQuery);
   const previousSummary = currentCase?.summary || "";
 
-  // 5. Run Entity Merging, Open Questions Insertion, and Summary Update CONCURRENTLY
+  // 6. Run Entity Merging, Open Questions Insertion, and Summary Update CONCURRENTLY
   const storeOpenQuestionsPromise = async (): Promise<number> => {
     let count = 0;
+    // Store standard extracted open questions
     for (const qText of extracted.open_questions) {
       if (qText.trim()) {
         await db.collection("openQuestions").insertOne({
@@ -420,6 +463,17 @@ export async function ingestFact(
         count++;
       }
     }
+    // Store any detected discrepancies as open questions for confirmation
+    for (const d of discrepancies) {
+      await db.collection("openQuestions").insertOne({
+        caseId,
+        text: `Contradiction / Discrepancy: ${d.description} (Proposed: ${d.resolutionOptions[0]})`,
+        status: "open",
+        noteId,
+        createdAt: noteDate,
+      });
+      count++;
+    }
     return count;
   };
 
@@ -428,6 +482,13 @@ export async function ingestFact(
     storeOpenQuestionsPromise(),
     updateCaseSummary(caseId, previousSummary, text, extracted.events),
   ]);
+
+  // Build confirmation prompt if contradictions were detected
+  let confirmationPrompt: string | undefined = undefined;
+  if (discrepancies.length > 0) {
+    const desc = discrepancies.map((d) => d.description).join(" ");
+    confirmationPrompt = `⚠️ Evidentiary Discrepancy Detected: ${desc} Please confirm whether to update the prior case record or keep both findings.`;
+  }
 
   return {
     noteId,
@@ -439,5 +500,7 @@ export async function ingestFact(
     openQuestionsSaved: openQuestionsCount,
     runningSummary,
     extracted,
+    discrepancies,
+    confirmationPrompt,
   };
 }

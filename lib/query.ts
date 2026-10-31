@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { getDb } from "./db";
 import { embed, callLLM } from "./llm";
+import { normalizeEntityName, calculateSimilarity } from "./entity-matcher";
 
 // ==========================================
 // Types
@@ -95,11 +96,31 @@ export function computeSuspectScores(
   );
 
   const scores: SuspectScoreBreakdown[] = persons.map((entity) => {
-    const entityName = (entity.name || "").toLowerCase();
-    const aliases = (entity.aliases || []).map((a: string) => a.toLowerCase());
+    const rawName = entity.name || "";
+    const normEntityName = normalizeEntityName(rawName);
+    const normAliases = (entity.aliases || []).map(normalizeEntityName);
+    const entityTokens = normEntityName.split(/\s+/).filter((t: string) => t.length >= 3);
+
     const matchesEntity = (str: string) => {
+      if (!str) return false;
       const s = str.toLowerCase();
-      return s.includes(entityName) || aliases.some((a: string) => s.includes(a));
+      const normStr = normalizeEntityName(str);
+
+      // Exact substring match
+      if (s.includes(rawName.toLowerCase()) || normStr.includes(normEntityName)) return true;
+
+      // Alias match
+      if (normAliases.some((a: string) => a && (s.includes(a) || normStr.includes(a)))) return true;
+
+      // Token overlap match (e.g. first or last name >= 3 characters)
+      for (const tok of entityTokens) {
+        if (normStr.includes(tok)) return true;
+      }
+
+      // Fuzzy typo match (e.g. "Vikram Malhothra" vs "Vikram Malhotra")
+      if (calculateSimilarity(normStr, normEntityName) >= 0.82) return true;
+
+      return false;
     };
 
     // 1. Linked Events (+2 per linked event)
