@@ -936,15 +936,9 @@ export default function CaseWorkspacePage() {
           </div>
         </section>
 
-<<<<<<< HEAD
-        /* ═════════════════════════════════════════════════════════════
-        ADJUSTABLE RESIZE DIVIDER (Desktop only)
-        ══════════════════════════════════════════════════════════════ */
-=======
         {/* ═════════════════════════════════════════════════════════════
         ADJUSTABLE RESIZE DIVIDER (Desktop only)
         ══════════════════════════════════════════════════════════════ */}
->>>>>>> refs/remotes/origin/main
         <div
           role="separator"
           tabIndex={0}
