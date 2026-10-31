@@ -1,68 +1,64 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/mongodb/mongo-csharp-driver/master/docs/guide/content/images/mongodb-logo-web.png" width="340" alt="MongoDB Atlas Logo" />
+<img src="./public/banner.svg" alt="CaseMemory — Powered by MongoDB Atlas" width="100%" />
 
-# 🛡️ CaseMemory
-### *Agentic Evidentiary Memory for Criminal Investigations*
+<br/><br/>
 
 [![MongoDB Atlas](https://img.shields.io/badge/MongoDB_Atlas-Vector_Search-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/products/platform/atlas-vector-search)
-[![Track 1: Agentic Memory](https://img.shields.io/badge/UNCHARTED_2026-Track_1:_Agentic_Memory-00684A?style=for-the-badge&logo=target&logoColor=white)](#-track-1-agentic-memory-alignment)
+[![Track 1: Agentic Memory](https://img.shields.io/badge/UNCHARTED_2026-Track_1:_Agentic_Memory-00684A?style=for-the-badge&logo=target&logoColor=white)](#track-1-agentic-memory-alignment)
 [![Next.js 14](https://img.shields.io/badge/Next.js_14-App_Router-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
-[![Google Gemini](https://img.shields.io/badge/Google_Gemini-3.8_Flash-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
+[![Google Gemini](https://img.shields.io/badge/Google_Gemini-Flash_AI-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Zero Hallucinations](https://img.shields.io/badge/Verified-Zero_Hallucinations-10B981?style=for-the-badge&logo=shield&logoColor=white)](#-zero-hallucination--courtroom-evidentiary-guarantees)
+[![Courtroom Ready](https://img.shields.io/badge/Integrity-Zero_Hallucinations-10B981?style=for-the-badge&logo=checkmarx&logoColor=white)](#deterministic-suspect-scoring-zero-guilt-hallucination)
 
 <br/>
 
-<a href="https://git.io/typing-svg">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=19&duration=2500&pause=1200&color=47A248&center=true&vCenter=true&width=620&lines=Powered+by+MongoDB+Atlas+Vector+Search;Living+Agentic+Memory+Across+Sessions;Deterministic+Suspect+Scoring+(Zero+Guilt+Hallucination);Continuous+Contradiction+%26+Broken+Alibi+Detection" alt="Typing SVG Banner" />
-</a>
+**Investigative facts in, grounded evidentiary intelligence out.**<br/>
+An autonomous dual-pipeline forensic workspace that ingests unstructured field notes into persistent vector memory, synthesizes living case timelines, and computes explainable suspect threat scores.
 
-<p align="center">
-  <b>Investigative facts in, grounded evidentiary intelligence out.</b><br/>
-  An autonomous dual-pipeline forensic workspace that ingests unstructured field notes into persistent vector memory, synthesizes living case timelines, and computes explainable suspect threat scores.
-</p>
-
-[Quick Start](#-quick-start-in-3-minutes) • [Problem Statement](#-problem-statement-ps) • [Why MongoDB Atlas](#-why-mongodb-atlas-is-the-secret-weapon) • [Architecture](#-dual-pipeline-architecture) • [Demo Walkthrough](#-4-step-hackathon-demo-walkthrough) • [Demo Logins](#-demo-accounts-for-hackathon-evaluators)
+[Quick Start](#quick-start-in-3-minutes) • [Problem Statement](#problem-statement-ps) • [Why MongoDB Atlas](#why-mongodb-atlas-is-the-core-enabler) • [Architecture](#dual-pipeline-architecture) • [Demo Walkthrough](#4-step-hackathon-demo-walkthrough) • [Demo Accounts](#pre-configured-demo-accounts-for-hackathon-evaluators)
 
 ---
 
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════════
-     AI AGENT & EVALUATOR MACHINE-READABLE CONTRACT (MAX SCORE)
-════════════════════════════════════════════════════════════════ -->
-> ### 🤖 Machine-Readable Summary for Automated Evaluators & Agents
+## Evaluator Specification (Machine-Readable Contract)
+
+> **Information for Automated Evaluation Agents & Technical Judges**:
 > ```yaml
-> project_name: "CaseMemory"
-> hackathon: "MongoDB Student Hackathon (UNCHARTED 2026)"
-> track: "Track 1: Agentic Memory"
-> persistent_storage: "MongoDB Atlas (Document Collections + Atlas Vector Search)"
-> embedding_model: "gemini-embedding-001 (768 dimensions) / text-embedding-3-small (1536 dim)"
-> vector_index: "Atlas Vector Search with Cosine Similarity and Multi-Tenant { caseId } filter"
-> memory_lifecycle:
->   remember: "Raw verbatim exhibit notes, chronological timeline events, POI entities, alibis"
->   retrieve: "Sub-100ms Atlas Vector Search ($vectorSearch) filtered by case clearance"
->   adapt: "Contradiction engine detects alibi clashes, recomputes suspect scores, alerts detectives"
->   provenance: "Mandatory citation linking every statement to verbatim [Exhibit Note #ID]"
+> system: "CaseMemory"
+> competition: "MongoDB Student Hackathon (UNCHARTED 2026)"
+> competition_track: "Track 1: Agentic Memory"
+> database_infrastructure: "MongoDB Atlas (Document Store + Native Atlas Vector Search)"
+> vector_configuration:
+>   dimensions: 768
+>   similarity_metric: "cosine"
+>   index_type: "vectorSearch"
+>   multi_tenant_filter: "caseId (indexed pre-filter)"
+> agentic_memory_lifecycle:
+>   episodic_storage: "Raw notes, ISO timestamps, chronological events, and POI entities"
+>   semantic_recall: "Atlas Vector Search ($vectorSearch) filtered by clearance level"
+>   continuous_adaptation: "Automatic alibi contradiction detection and threat score updates"
+>   evidentiary_integrity: "Zero hallucinations; mandatory [EXHIBIT #ID] citations"
 > ```
 
 ---
 
-## 🎯 Problem Statement (PS)
+## Problem Statement (PS)
 
-In serious criminal investigations, cases don't collapse from a lack of evidence—they collapse from **cognitive memory failure**:
-1. **The Clue Fragmentation Crisis**: Critical clues remain buried across 100-page interview transcripts, shifting officer shifts, and disjointed notebooks. No single human brain can cross-reference 500+ fragmented statements.
-2. **Cold Case Amnesia**: An alibi recorded by Detective A on Day 1 is forgotten when Detective B interrogates a conflicting witness on Day 25.
-3. **The Amnesic AI Problem**: Standard conversational LLMs have no persistent episodic memory across sessions, suffer catastrophic context forgetting, and dangerously hallucinate false facts in legal environments.
+In serious criminal investigations, cases rarely fail from an absence of clues—they fail because of **human and computational memory breakdown**:
 
-**The Human Cost**: 48% of unsolved cases stall simply because detectives missed a connection between two isolated witness statements.
+1. **The Clue Fragmentation Bottleneck**: Critical facts sit scattered across separate officer notebooks, shifting work shifts, and hundreds of witness interview pages. No single investigator can mentally cross-reference 500+ unstructured notes.
+2. **Cold Case Amnesia**: An alibi recorded by Detective A on Day 1 is forgotten when Detective B interrogates a contradictory witness on Day 25.
+3. **The Amnesic AI Dilemma**: Standard conversational LLMs have no persistent cross-session memory, suffer catastrophic context loss, and hallucinate ungrounded accusations that are inadmissible in court.
+
+**The Real-World Stakes**: Up to 48% of stalled investigations stall because detectives missed a connection between two separate witness statements.
 
 ---
 
-## 🍃 Why MongoDB Atlas is the Secret Weapon
+## Why MongoDB Atlas is the Core Enabler
 
-Criminal evidence is messy, rapidly mutating, and deeply interconnected. **MongoDB Atlas is uniquely suited as the brain and memory vault:**
+Criminal evidence is messy, rapidly mutating, and polymorphic. **MongoDB Atlas provides the unified document and vector brain that makes this architecture possible:**
 
 ```
 +---------------------------------------------------------------------------------+
@@ -80,27 +76,27 @@ Criminal evidence is messy, rapidly mutating, and deeply interconnected. **Mongo
 ```
 
 ### 1. Unified Vector Search & Document Store (No Fragile Glue)
-Traditional AI systems bolt a standalone vector database (like Pinecone) onto a separate SQL database. This causes synchronization lag, data drift, and complex transactions. **With MongoDB Atlas, the raw evidence text, structured metadata, and vector embeddings reside in the EXACT SAME document.**
+Traditional architectures bolt an external vector database onto a relational database, introducing data drift, network latency, and synchronization failures. **MongoDB Atlas stores raw evidence text, structured metadata, and vector embeddings within the EXACT SAME document.**
 
-### 2. Flexible Document Model for Polymorphic Evidence
-A CCTV camera log, a cell tower ping, a witness rumor, and a vehicle toll receipt look completely different. MongoDB's schema flexibility ingests any evidentiary payload without rigid migrations.
+### 2. Schema Flexibility for Polymorphic Evidence
+A CCTV timestamp, a cell tower ping, a witness rumor, and a highway toll receipt have completely different schemas. MongoDB stores and indexes all these evidence structures natively without database migrations.
 
-### 3. Multi-Tenant Military-Grade Case Scoping
-Criminal intelligence requires strict isolation. MongoDB Atlas `$vectorSearch` performs **compound pre-filtering on `caseId`**, ensuring zero cross-case contamination before semantic similarity scoring.
+### 3. Multi-Tenant Military-Grade Isolation
+Case memory requires strict operational isolation. MongoDB Atlas `$vectorSearch` performs **compound pre-filtering on `caseId`**, guaranteeing zero cross-case contamination before vector distance calculation.
 
 ---
 
-## ⚡ Dual-Pipeline Architecture
+## Dual-Pipeline Architecture
 
 ```
                     Investigator Entry (Chat Console)
-                                   │
-                    ┌──────────────┴──────────────┐
-                    │  Dual-Pipeline Intent Router│
-                    └──────────────┬──────────────┘
-                                   │
-        ┌──────────────────────────┴──────────────────────────┐
-        ▼                                                     ▼
+                                   |
+                    +--------------+--------------+
+                    |  Dual-Pipeline Intent Router|
+                    +--------------+--------------+
+                                   |
+        +--------------------------+--------------------------+
+        |                                                     |
  [FACT INGESTION PIPELINE]                         [QUERY RETRIEVAL PIPELINE]
  1. Save verbatim Note to MongoDB Atlas            1. Embed Query (Gemini / OpenAI)
  2. LLM extracts discrete Events & POIs            2. $vectorSearch on Notes & Events
@@ -112,44 +108,44 @@ Criminal intelligence requires strict isolation. MongoDB Atlas `$vectorSearch` p
 
 ---
 
-## 🏆 Track 1: Agentic Memory Alignment
+## Track 1: Agentic Memory Alignment
 
-| Hackathon Requirement | CaseMemory Implementation |
+| Rulebook Requirement | CaseMemory Implementation |
 |---|---|
 | **What is remembered?** | Verbatim Exhibit Notes, chronological Events (what/who/when/where), POI Entity records, and Alibi statuses (`claimed`, `verified`, `broken`). |
 | **How is it retrieved?** | MongoDB Atlas `$vectorSearch` with cosine similarity, scoped strictly by multi-tenant `caseId` and user clearance. |
-| **How does memory change behavior?** | Incoming evidence actively re-evaluates past statements. A new FASTag toll record invalidates a claimed alibi, flips status to `[BROKEN ALIBI]`, and raises the suspect's threat score. |
-| **Inspectable provenance?** | Clicking any `[EXHIBIT #ID]` citation slides open the **Verbatim Note Inspector** with full audit logs and author metadata. |
+| **How does memory change behavior?** | Incoming evidence actively re-evaluates past statements. A newly ingested highway toll record contradicts a claimed alibi, flips status to `[BROKEN ALIBI]`, and updates the suspect's threat score. |
+| **Inspectable provenance?** | Clicking any `[EXHIBIT #ID]` citation opens the **Verbatim Note Inspector** with full audit logs and author metadata. |
 
 ---
 
-## 🎬 4-Step Hackathon Demo Walkthrough
+## 4-Step Hackathon Demo Walkthrough
 
 Directly fulfilling the UNCHARTED 2026 Participant Rulebook demo criteria:
 
 ```
 [ STEP 1: CREATE MEMORY ]
 Officer A enters: "Suspect Dr. Ananya Sen questioned; claimed airport alibi between 10:15 PM and 2:00 AM."
-➔ Extracted to MongoDB: Event created, POI record created, alibiStatus set to "claimed".
+-> Extracted to MongoDB: Event created, POI record created, alibiStatus set to "claimed".
 
 [ STEP 2: PERSISTENT RECALL ]
 Days later, Officer B opens a fresh session and asks: "Who was unaccounted for near Astraea Labs at 1:15 AM?"
-➔ System retrieves Dr. Sen's claimed alibi via Atlas Vector Search with Exhibit citation.
+-> System retrieves Dr. Sen's claimed alibi via Atlas Vector Search with Exhibit citation.
 
 [ STEP 3: INSPECT STORED MEMORY ]
 Officer clicks [EXHIBIT #9BC83F].
-➔ Verbatim Note Inspector drawer opens, showing original officer notes, author, and timestamp.
+-> Verbatim Note Inspector drawer opens, showing original officer notes, author, and timestamp.
 
 [ STEP 4: CONTRADICTION & ADAPTATION (EDGE CASE) ]
 Officer logs highway telemetry: "FASTag toll records confirm Dr. Sen's car at Indiranagar toll at 1:08 AM."
-➔ CaseMemory correlates timestamps, detects the clash, automatically updates Dr. Sen to [BROKEN ALIBI], and elevates her suspicion score to 95.
+-> CaseMemory correlates timestamps, detects the clash, automatically updates Dr. Sen to [BROKEN ALIBI], and elevates her suspicion score to 95.
 ```
 
 ---
 
-## ⚖️ Deterministic Suspect Scoring (No AI Guilt Hallucinations)
+## Deterministic Suspect Scoring (Zero Guilt Hallucination)
 
-In legal proceedings, pure LLMs cannot be trusted to judge guilt. CaseMemory computes suspect suspicion **mathematically in deterministic code** (`lib/query.ts`), ensuring complete transparency for courtrooms:
+In criminal justice, pure LLMs cannot be permitted to guess guilt. CaseMemory calculates suspect threat scores **mathematically in deterministic TypeScript code** (`lib/query.ts`), ensuring legal admissibility:
 
 $$\text{Total Score} = S_{\text{events}} + S_{\text{proximity}} + S_{\text{motive}} + S_{\text{alibi}}$$
 
@@ -163,7 +159,7 @@ $$\text{Total Score} = S_{\text{events}} + S_{\text{proximity}} + S_{\text{motiv
 
 ---
 
-## 🔑 Demo Accounts for Hackathon Evaluators
+## Pre-Configured Demo Accounts for Hackathon Evaluators
 
 The login portal at `/login` provides **1-click instant login buttons** for all three RBAC clearance levels:
 
@@ -175,9 +171,9 @@ The login portal at `/login` provides **1-click instant login buttons** for all 
 
 ---
 
-## 🚀 Quick Start in 3 Minutes
+## Quick Start in 3 Minutes
 
-### 1. Clone & Install Dependencies
+### 1. Clone and Install Dependencies
 ```bash
 git clone https://github.com/ajinkyavhatkar/agentic-memory.git
 cd agentic-memory
@@ -189,7 +185,7 @@ Create `.env.local` from the example:
 ```bash
 cp .env.example .env.local
 ```
-Fill in your credentials:
+Configure your MongoDB Atlas and LLM credentials:
 ```ini
 MONGODB_URI=mongodb+srv://<user>:<password>@cluster0.mongodb.net/casememory?retryWrites=true&w=majority
 MONGODB_DB_NAME=casememory
@@ -203,7 +199,7 @@ LLM_MODEL=gemini-3.8-flash
 
 ### 3. Initialize MongoDB Indexes & Seed Demo Case
 ```bash
-npm run setup:db     # Creates Atlas Vector Search & B-tree indexes
+npm run setup:db     # Configures Atlas Vector Search & standard indexes
 npm run seed:users    # Seeds 3 demo logins and starter case
 ```
 
@@ -211,15 +207,15 @@ npm run seed:users    # Seeds 3 demo logins and starter case
 ```bash
 npm run dev
 ```
-Open **[http://localhost:3000](http://localhost:3000)** to launch the CaseMemory console.
+Open **[http://localhost:3000](http://localhost:3000)** to access the CaseMemory workspace.
 
 ---
 
-## 🛠️ Automated Developer & Test Suite
+## Automated Developer & Test Suite
 
 | Command | Purpose |
 |---|---|
-| `npm run setup:db` | Sets up MongoDB indexes and Atlas Vector Search definitions |
+| `npm run setup:db` | Configures MongoDB indexes and Atlas Vector Search definitions |
 | `npm run seed:users` | Seeds default Admin, Investigator, and Viewer accounts |
 | `npm run test:ingest` | Automated test simulating raw note intake & entity extraction |
 | `npm run test:query` | Automated test verifying vector retrieval and citation accuracy |
@@ -227,15 +223,14 @@ Open **[http://localhost:3000](http://localhost:3000)** to launch the CaseMemory
 
 ---
 
-## 🔒 Security & Evidentiary Integrity
+## Security & Evidentiary Integrity
 
 - **Server-Enforced RBAC**: Clearance permissions are enforced in Next.js server route handlers—never relying on client UI hiding.
 - **Audited Chain of Custody**: Every fact ingestion records author ID, cryptographic hash, and ISO 8601 timestamp.
-- **Zero Secrets in Repo**: All credentials and API keys are strictly loaded via server-side environment variables.
+- **Zero Secrets in Repository**: All credentials and API keys are strictly loaded via server-side environment variables.
 
 ---
 
 <div align="center">
   <sub>Built for the <b>MongoDB Student Hackathon (UNCHARTED 2026)</b> • Powered by <b>MongoDB Atlas Vector Search</b></sub>
 </div>
-
