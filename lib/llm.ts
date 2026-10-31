@@ -3,11 +3,12 @@
  * Supports Google Gemini API (default) and OpenAI-compatible endpoints.
  */
 
-export const DEFAULT_EMBEDDING_DIMENSION = 768; // Gemini gemini-embedding-001 (768 dimensions via outputDimensionality)
+export const DEFAULT_EMBEDDING_DIMENSION = 768; // Gemini text-embedding-004 / gemini-embedding-001 (768 dimensions)
 
 /**
  * Returns the configured vector embedding dimensions.
- * Defaults to 768 (Gemini gemini-embedding-001). Set EMBEDDING_DIMENSIONS in .env if using OpenAI (1536).
+ * Defaults to 768 (Gemini text-embedding-004 / gemini-embedding-001).
+ * Set EMBEDDING_DIMENSIONS in .env if using OpenAI (1536).
  */
 export function getEmbeddingDimension(): number {
   if (process.env.EMBEDDING_DIMENSIONS) {
@@ -22,7 +23,7 @@ export function getEmbeddingDimension(): number {
 }
 
 /**
- * Helper to fetch with retry for transient rate limits (429) or high demand spikes (503).
+ * Helper to fetch with retry for transient network issues or rate limits (429, 503).
  */
 async function fetchWithRetry(
   url: string,
@@ -57,7 +58,7 @@ async function fetchWithRetry(
 
 /**
  * Generates an embedding vector for the provided text.
- * Default: Google Gemini `gemini-embedding-001` (768 dimensions).
+ * Default: Google Gemini `text-embedding-004` / `gemini-embedding-001` (768 dimensions).
  */
 export async function embed(text: string): Promise<number[]> {
   const apiKey = process.env.LLM_API_KEY;
@@ -93,43 +94,58 @@ export async function embed(text: string): Promise<number[]> {
   }
 
   // Default: Gemini API
-  let model = process.env.EMBEDDING_MODEL || "gemini-embedding-001";
-  if (model === "text-embedding-004") {
-    model = "gemini-embedding-001";
+  const primaryEmbedModel = process.env.EMBEDDING_MODEL || "text-embedding-004";
+  const embedCandidates = Array.from(
+    new Set([primaryEmbedModel, "text-embedding-004", "gemini-embedding-001"])
+  );
+
+  let lastError = "";
+  for (const model of embedCandidates) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:embedContent?key=${apiKey}`;
+    const requestBody: Record<string, unknown> = {
+      model: `models/${model}`,
+      content: {
+        parts: [{ text }],
+      },
+      outputDimensionality: getEmbeddingDimension(),
+    };
+
+    try {
+      const response = await fetchWithRetry(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const values = data?.embedding?.values;
+        if (Array.isArray(values)) {
+          return values;
+        }
+      }
+
+      lastError = await response.text();
+      // On 404 or 503, try next candidate
+      if (response.status === 404 || response.status === 503 || response.status === 429) {
+        console.warn(`Embedding model ${model} returned (${response.status}), falling back to alternative...`);
+        continue;
+      }
+
+      throw new Error(`Gemini Embedding API error (${response.status}): ${lastError}`);
+    } catch (err: any) {
+      lastError = err.message || String(err);
+      console.warn(`Embedding attempt with ${model} failed, falling back...`);
+    }
   }
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:embedContent?key=${apiKey}`;
 
-  const requestBody: Record<string, unknown> = {
-    model: `models/${model}`,
-    content: {
-      parts: [{ text }],
-    },
-    outputDimensionality: getEmbeddingDimension(),
-  };
-
-  const response = await fetchWithRetry(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(requestBody),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Gemini Embedding API error (${response.status}): ${errorText}`);
-  }
-
-  const data = await response.json();
-  const values = data?.embedding?.values;
-  if (!Array.isArray(values)) {
-    throw new Error("Invalid embedding response from Gemini model");
-  }
-
-  return values;
+  throw new Error(`All embedding models failed. Last error: ${lastError}`);
 }
 
 /**
  * Calls the LLM for structured extraction or conversational analysis.
- * Default model: latest Gemini Flash
+ * Supported model env var: LLM_MODEL (defaults to "gemini-1.5-flash" on Gemini).
+ * Automatically falls back to supported models on 404 (not found) and 503 (high demand).
  */
 export async function callLLM(
   prompt: string,
@@ -174,23 +190,24 @@ export async function callLLM(
     return data.choices?.[0]?.message?.content || "";
   }
 
-  // Default: Gemini API - dynamically attempts available models if a model is experiencing high demand (503)
-  const envModel = process.env.LLM_MODEL || "gemini-flash-lite-latest";
+  // Default: Gemini API
+  // Configurable via LLM_MODEL with documented reliable default "gemini-1.5-flash"
+  const envModel = process.env.LLM_MODEL || "gemini-1.5-flash";
   let primaryModel = envModel;
-  if (primaryModel.toLowerCase() === "latest" || primaryModel === "gemini-2.0-flash" || primaryModel === "gemini-2.5-flash") {
-    primaryModel = "gemini-flash-lite-latest";
+  if (primaryModel.toLowerCase() === "latest") {
+    primaryModel = "gemini-1.5-flash";
   }
 
-  // Ordered list of viable models to try in case of 503 high demand or 429
+  // Candidate chain: user configured model -> gemini-1.5-flash -> gemini-2.0-flash -> gemini-1.5-flash-8b
   const candidateModels = Array.from(
     new Set([
       primaryModel,
-      "gemini-flash-lite-latest",
-      "gemini-3.5-flash",
-      "gemini-3-flash-preview",
-      "gemini-3.8-flash",
+      "gemini-1.5-flash",
+      "gemini-2.0-flash",
+      "gemini-1.5-flash-8b",
+      "gemini-1.5-pro",
     ])
-  ).filter((m) => m !== "gemini-2.0-flash" && m !== "gemini-2.5-flash");
+  );
 
   const requestBody: Record<string, unknown> = {
     contents: [
@@ -230,10 +247,10 @@ export async function callLLM(
         }
       }
 
-      // If 503 or 429, try next candidate
       lastErrorText = await response.text();
-      if (response.status === 503 || response.status === 429 || response.status === 404) {
-        console.warn(`Model ${modelCandidate} returned (${response.status}), trying next candidate...`);
+      // On 404 (model not found/supported in region), 503 (high demand), or 429 (rate limit), fallback
+      if (response.status === 404 || response.status === 503 || response.status === 429) {
+        console.warn(`Model ${modelCandidate} returned (${response.status}), falling back to next candidate...`);
         continue;
       }
 
@@ -246,7 +263,6 @@ export async function callLLM(
 
   throw new Error(`All LLM candidate models failed. Last error: ${lastErrorText}`);
 }
-
 
 /**
  * Strips markdown code block wrappers from JSON strings returned by LLMs.
