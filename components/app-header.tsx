@@ -24,30 +24,10 @@ export function AppHeader({
             <span className="material-symbols-outlined text-[18px]">policy</span>
             <span>CaseMemory</span>
           </Link>
-
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container text-on-surface-variant font-label text-xs">
-            <span className="w-2 h-2 rounded-full bg-secondary" />
-            <span className="font-medium">
-              {activeCaseTitle ? `${activeCaseTitle}` : "Evidentiary Memory Synced"}
-            </span>
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-surface-container-highest text-on-surface">
-              {tracesCount} traces
-            </span>
-          </div>
         </div>
 
         {/* Right Quick Controls */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-surface-container text-on-surface-variant text-xs font-label">
-            <span className="material-symbols-outlined text-[17px]">database</span>
-            <span className="hidden md:inline font-medium">Atlas Vector Store</span>
-            <kbd className="px-1.5 py-0.5 rounded bg-surface-container-highest text-[10px] font-bold">
-              768-D
-            </kbd>
-          </div>
-
-          <div className="h-5 w-px bg-outline-variant/40" />
-
           {user && (
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-on-surface hidden md:inline">

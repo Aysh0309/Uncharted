@@ -52,9 +52,6 @@ export function AppSidebar({ user, activeCase, notesCount = 3 }: AppSidebarProps
               CaseMemory
             </span>
           </Link>
-          <span className="font-label text-[10px] uppercase tracking-widest px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-semibold">
-            v2.4
-          </span>
         </div>
 
         {/* Active Case Context Pill */}
@@ -117,23 +114,6 @@ export function AppSidebar({ user, activeCase, notesCount = 3 }: AppSidebarProps
 
       {/* Bottom Metadata & User Session */}
       <div className="px-4 flex flex-col gap-3">
-        {/* Vector Memory Gauge */}
-        <div className="p-3 rounded-xl bg-surface-container border border-outline-variant/30 flex flex-col gap-1.5">
-          <div className="flex items-center justify-between text-on-surface-variant">
-            <span className="font-label text-[11px] flex items-center gap-1.5 font-semibold">
-              <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" />
-              Atlas Vector Memory
-            </span>
-            <span className="font-label text-[11px] font-bold text-primary">Active</span>
-          </div>
-          <div className="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
-            <div className="bg-secondary h-full rounded-full" style={{ width: "88%" }} />
-          </div>
-          <span className="font-label text-[10px] text-on-surface-variant">
-            {notesCount} notes indexed • Cosine 768-dim
-          </span>
-        </div>
-
         {/* User Profile Card */}
         <div className="flex items-center justify-between p-2 rounded-xl bg-surface-container-lowest border border-outline-variant/20 shadow-subtle">
           <div className="flex items-center gap-2 min-w-0">
