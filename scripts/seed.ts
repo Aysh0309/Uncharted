@@ -317,7 +317,7 @@ async function seed() {
       console.log(`Text: "${note.text}"\n`);
 
       const startTime = Date.now();
-      const result = await ingestFact(caseId, authorId, note.text, note.date);
+      const result = await ingestFact(caseId, authorId, note.text, undefined, note.date);
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
 
       console.log(`  ✓ Note #${result.noteId} stored in ${elapsed}s`);

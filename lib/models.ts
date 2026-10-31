@@ -17,9 +17,11 @@ export type UserRole = z.infer<typeof UserRoleSchema>;
 export const UserSchema = z.object({
   _id: ObjectIdSchema.optional(),
   email: z.string().email(),
-  passwordHash: z.string(),
+  passwordHash: z.string().optional(),
   name: z.string().min(1),
   role: UserRoleSchema,
+  googleId: z.string().optional(),
+  picture: z.string().optional(),
   createdAt: z.date().default(() => new Date()),
 });
 export type User = z.infer<typeof UserSchema>;
@@ -110,7 +112,7 @@ export const EntitySchema = z.object({
   type: EntityTypeSchema,
   role: EntityRoleSchema.default("other"),
   alibiStatus: AlibiStatusSchema.default("unknown"),
-  alibiDetails: z.string().optional(),
+  alibiDetails: z.string().nullable().optional(),
   eventIds: z.array(z.string()).default([]),
   noteIds: z.array(z.string()).default([]),
   createdAt: z.date().default(() => new Date()),

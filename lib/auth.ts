@@ -10,6 +10,7 @@ export interface UserSession {
   email: string;
   name: string;
   role: UserRole;
+  picture?: string;
 }
 
 export const JWT_COOKIE_NAME = "casememory_token";
@@ -41,6 +42,7 @@ export function signToken(user: UserSession): string {
       email: user.email,
       name: user.name,
       role: user.role,
+      picture: user.picture,
     },
     getJwtSecret(),
     { expiresIn: "7d" }
