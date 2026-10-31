@@ -141,6 +141,69 @@ export async function POST(req: NextRequest) {
 }
 
 /**
+ * PATCH /api/admin/users
+ * Updates a user's role (Admin only)
+ */
+export async function PATCH(req: NextRequest) {
+  try {
+    const session = await getSessionUser(req);
+    if (!session || !requireRole(session, ["admin"])) {
+      return NextResponse.json(
+        { status: "error", message: "Forbidden: Admin access required" },
+        { status: 403 }
+      );
+    }
+
+    const body = await req.json();
+    const { userId, role } = body;
+
+    if (!userId) {
+      return NextResponse.json(
+        { status: "error", message: "User ID is required" },
+        { status: 400 }
+      );
+    }
+
+    if (role && !["admin", "investigator", "viewer"].includes(role)) {
+      return NextResponse.json(
+        { status: "error", message: "Invalid role specified" },
+        { status: 400 }
+      );
+    }
+
+    const db = await getDb();
+    let query: any = { _id: userId };
+    if (ObjectId.isValid(userId)) {
+      query = { _id: new ObjectId(userId) };
+    }
+
+    const updateDoc: any = {};
+    if (role) updateDoc.role = role;
+
+    const updateRes = await db.collection("users").updateOne(query, { $set: updateDoc });
+
+    if (updateRes.matchedCount === 0) {
+      return NextResponse.json(
+        { status: "error", message: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      status: "ok",
+      message: "User updated successfully",
+      userId,
+      role,
+    });
+  } catch (err: any) {
+    return NextResponse.json(
+      { status: "error", message: err?.message || "Failed to update user" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
  * DELETE /api/admin/users
  * Deletes a user (Admin only)
  */

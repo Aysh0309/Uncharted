@@ -333,66 +333,17 @@ export default function LoginPage() {
               </div>
 
               {/* Role Selection */}
-              <div className="space-y-1.5">
-                <label className="font-label text-xs font-bold text-on-surface flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[15px] text-on-surface-variant">shield_person</span>
-                  Operational Role
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setSignupRole("investigator")}
-                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer font-label ${
-                      signupRole === "investigator"
-                        ? "bg-secondary-container/40 border-secondary text-on-surface shadow-xs"
-                        : "bg-surface-container-low border-outline-variant/30 text-on-surface-variant hover:bg-surface-container"
-                    }`}
-                  >
-                    <div className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[15px] text-secondary">search_insights</span>
-                      <span className="text-[11px] font-bold block">Investigator</span>
-                    </div>
-                    <span className="text-[9px] text-on-surface-variant block mt-0.5 leading-tight">
-                      Read/Write Cases
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setSignupRole("viewer")}
-                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer font-label ${
-                      signupRole === "viewer"
-                        ? "bg-secondary-container/40 border-secondary text-on-surface shadow-xs"
-                        : "bg-surface-container-low border-outline-variant/30 text-on-surface-variant hover:bg-surface-container"
-                    }`}
-                  >
-                    <div className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[15px] text-outline">visibility</span>
-                      <span className="text-[11px] font-bold block">Analyst</span>
-                    </div>
-                    <span className="text-[9px] text-on-surface-variant block mt-0.5 leading-tight">
-                      Read &amp; Query
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setSignupRole("admin")}
-                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer font-label ${
-                      signupRole === "admin"
-                        ? "bg-secondary-container/40 border-secondary text-on-surface shadow-xs"
-                        : "bg-surface-container-low border-outline-variant/30 text-on-surface-variant hover:bg-surface-container"
-                    }`}
-                  >
-                    <div className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[15px] text-error">admin_panel_settings</span>
-                      <span className="text-[11px] font-bold block">Admin</span>
-                    </div>
-                    <span className="text-[9px] text-on-surface-variant block mt-0.5 leading-tight">
-                      Manage All
-                    </span>
-                  </button>
-                </div>
+              <div className="space-y-1">
+                <label className="font-label text-xs font-bold text-on-surface">Operational Role</label>
+                <select
+                  value={signupRole}
+                  onChange={(e: any) => setSignupRole(e.target.value)}
+                  className="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-3.5 py-2.5 text-xs text-on-surface font-label cursor-pointer"
+                >
+                  <option value="investigator">Investigator (Read &amp; Write cases)</option>
+                  <option value="viewer">Viewer (Read-only case queries)</option>
+                  <option value="admin">Administrator (Full case &amp; user access)</option>
+                </select>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

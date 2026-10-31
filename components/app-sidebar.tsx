@@ -85,50 +85,33 @@ export function AppSidebar({ user, activeCase, notesCount = 3 }: AppSidebarProps
             Evidentiary Workspace
           </div>
           <nav className="flex flex-col gap-1">
-            <Link
-              href={activeCase ? `/cases/${activeCase.id}` : "/cases"}
-              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all text-xs font-semibold ${
-                pathname === "/cases" || isCaseDetail
-                  ? "bg-primary text-on-primary shadow-sm"
-                  : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
-              }`}
-            >
-              <span className="material-symbols-outlined text-[19px]">chat_bubble</span>
-              <span>Chat & Evidentiary Stream</span>
-            </Link>
+            {activeCase ? (
+              <Link
+                href={`/cases/${activeCase.id}`}
+                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all text-xs font-semibold ${
+                  isCaseDetail
+                    ? "bg-primary text-on-primary shadow-sm"
+                    : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
+                }`}
+              >
+                <span className="material-symbols-outlined text-[19px]">chat_bubble</span>
+                <span>Active Case Chat</span>
+              </Link>
+            ) : null}
 
             <Link
               href="/cases"
               className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all text-xs font-semibold ${
-                pathname === "/cases" && !activeCase
+                !isCaseDetail
                   ? "bg-primary text-on-primary shadow-sm"
                   : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
               }`}
             >
               <span className="material-symbols-outlined text-[19px]">folder_open</span>
-              <span>Case Files Directory</span>
+              <span>Case Directory</span>
             </Link>
           </nav>
         </div>
-
-        {/* Admin Supervision Section */}
-        {user.role === "admin" && (
-          <div className="px-4">
-            <div className="px-2 mb-2 font-label text-[11px] uppercase tracking-wider text-secondary font-semibold flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[15px] text-error">admin_panel_settings</span>
-              <span>Root Administration</span>
-            </div>
-            <nav className="flex flex-col gap-1">
-              <Link
-                href="/cases?tab=personnel"
-                className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all text-xs font-semibold text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
-              >
-                <span className="material-symbols-outlined text-[19px]">group</span>
-                <span>Personnel &amp; Users</span>
-              </Link>
-            </nav>
-          </div>
-        )}
       </div>
 
       {/* Bottom Metadata & User Session */}
