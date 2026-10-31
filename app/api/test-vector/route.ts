@@ -1,14 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { embed, getEmbeddingDimension } from "@/lib/llm";
+import { getSessionUser } from "@/lib/auth";
+import { requireRole } from "@/lib/rbac";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Test endpoint to verify embedding generation, storing vectors in MongoDB,
+ * Diagnostic test endpoint to verify embedding generation, storing vectors in MongoDB,
  * and performing a live $vectorSearch query with cosine similarity and caseId filtering.
+ * Restricted to authenticated Admin in non-production environments.
  */
 export async function GET(req: NextRequest) {
+  // 1. Restrict to non-production environments
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json(
+      { status: "error", message: "Not found" },
+      { status: 404 }
+    );
+  }
+
+  // 2. Restrict to Admin role
+  const session = await getSessionUser(req);
+  if (!session || !requireRole(session, ["admin"])) {
+    return NextResponse.json(
+      { status: "error", message: "Forbidden: Admin access required" },
+      { status: 403 }
+    );
+  }
+
   const testCaseId = `test-case-${Date.now()}`;
   const testText =
     "Witness reported a dark blue sedan speeding away from the industrial warehouse near 4th street at 11:45 PM.";
@@ -99,4 +119,3 @@ export async function GET(req: NextRequest) {
     );
   }
 }
-

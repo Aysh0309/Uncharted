@@ -160,7 +160,10 @@ export type Query = z.infer<typeof QuerySchema>;
 // Validation Helpers for API input payloads
 // ==========================================
 export const IngestMessageInputSchema = z.object({
-  text: z.string().min(1, "Message text cannot be empty"),
+  text: z
+    .string()
+    .min(1, "Message text cannot be empty")
+    .max(2000, "Message exceeds maximum length of 2000 characters"),
 });
 
 export const LoginInputSchema = z.object({
@@ -180,4 +183,3 @@ export const CreateCaseInputSchema = z.object({
   description: z.string().default(""),
   memberIds: z.array(z.string()).default([]),
 });
-
