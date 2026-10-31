@@ -669,15 +669,10 @@ export default function CaseWorkspacePage() {
               <span className="font-mono text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-primary text-on-primary tracking-wider shrink-0">
                 SEC-01
               </span>
-              <div className="min-w-0">
-                <h2 className="font-headline font-bold text-xs text-primary uppercase tracking-wider flex items-center gap-1.5 truncate">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                  <span className="truncate">Investigation Chat &amp; Evidentiary Query</span>
-                </h2>
-                <span className="font-mono text-[9px] text-on-surface-variant block truncate">
-                  TRANSACTIONAL CONSOLE // DUAL-PIPELINE MEMORY
-                </span>
-              </div>
+              <h2 className="font-headline font-bold text-xs text-primary uppercase tracking-wider flex items-center gap-1.5 truncate">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                <span className="truncate">Investigation Chat &amp; Evidentiary Query</span>
+              </h2>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
@@ -987,14 +982,9 @@ export default function CaseWorkspacePage() {
                 <span className="font-mono text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-secondary text-on-primary tracking-wider shrink-0">
                   SEC-02
                 </span>
-                <div className="min-w-0">
-                  <h2 className="font-headline font-bold text-xs text-primary uppercase tracking-wider truncate">
-                    Evidentiary Matrix &amp; Timeline
-                  </h2>
-                  <span className="font-mono text-[9px] text-on-surface-variant block truncate">
-                    CHRONOLOGICAL DOSSIER // SYNCHRONIZED
-                  </span>
-                </div>
+                <h2 className="font-headline font-bold text-xs text-primary uppercase tracking-wider truncate">
+                  Evidentiary Matrix &amp; Timeline
+                </h2>
               </div>
 
               <span className="font-mono text-[9px] px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-bold border border-outline-variant/30 shrink-0">
