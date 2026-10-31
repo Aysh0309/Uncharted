@@ -83,3 +83,64 @@ export async function POST(
   }
 }
 
+/**
+ * DELETE /api/cases/[id]/assign
+ * Admin-only: Unassigns / removes an investigator or viewer from a case.
+ */
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getSessionUser(req);
+    if (!session || !requireRole(session, ["admin"])) {
+      return NextResponse.json(
+        { status: "error", message: "Forbidden: Admin access required to unassign users" },
+        { status: 403 }
+      );
+    }
+
+    const caseId = params.id;
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get("userId");
+
+    if (!userId) {
+      return NextResponse.json(
+        { status: "error", message: "userId query parameter is required" },
+        { status: 400 }
+      );
+    }
+
+    const db = await getDb();
+    let caseQuery: any = { _id: caseId };
+    if (ObjectId.isValid(caseId)) {
+      caseQuery = { _id: new ObjectId(caseId) };
+    }
+
+    const updateRes = await db.collection("cases").updateOne(
+      caseQuery,
+      {
+        $pull: { memberIds: userId } as any,
+      }
+    );
+
+    if (updateRes.matchedCount === 0) {
+      return NextResponse.json(
+        { status: "error", message: "Case not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      status: "ok",
+      message: "User unassigned from case successfully",
+      caseId,
+      userId,
+    });
+  } catch (err: any) {
+    return NextResponse.json(
+      { status: "error", message: err?.message || "Failed to unassign user from case" },
+      { status: 500 }
+    );
+  }
+}

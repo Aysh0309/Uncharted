@@ -110,6 +110,25 @@ export function AppSidebar({ user, activeCase, notesCount = 3 }: AppSidebarProps
             </Link>
           </nav>
         </div>
+
+        {/* Admin Supervision Section */}
+        {user.role === "admin" && (
+          <div className="px-4">
+            <div className="px-2 mb-2 font-label text-[11px] uppercase tracking-wider text-secondary font-semibold flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[15px] text-error">admin_panel_settings</span>
+              <span>Root Administration</span>
+            </div>
+            <nav className="flex flex-col gap-1">
+              <Link
+                href="/cases?tab=personnel"
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all text-xs font-semibold text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
+              >
+                <span className="material-symbols-outlined text-[19px]">group</span>
+                <span>Personnel &amp; Users</span>
+              </Link>
+            </nav>
+          </div>
+        )}
       </div>
 
       {/* Bottom Metadata & User Session */}

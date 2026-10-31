@@ -147,3 +147,66 @@ export async function GET(
     );
   }
 }
+
+/**
+ * DELETE /api/cases/[id]
+ * Administrator-only endpoint to permanently remove a case and all linked records
+ * (notes, timeline events, entities, open questions, and queries).
+ */
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getSessionUser(req);
+    if (!session) {
+      return NextResponse.json(
+        { status: "unauthenticated", message: "Login required" },
+        { status: 401 }
+      );
+    }
+
+    if (session.role !== "admin") {
+      return NextResponse.json(
+        { status: "error", message: "Forbidden: Only administrators can delete cases" },
+        { status: 403 }
+      );
+    }
+
+    const caseId = params.id;
+    let query: any = { _id: caseId };
+    if (ObjectId.isValid(caseId)) {
+      query = { _id: new ObjectId(caseId) };
+    }
+
+    const db = await getDb();
+    const caseDoc = await db.collection("cases").findOne(query);
+
+    if (!caseDoc) {
+      return NextResponse.json(
+        { status: "error", message: "Case not found" },
+        { status: 404 }
+      );
+    }
+
+    // Cascade delete across all linked collections
+    await Promise.all([
+      db.collection("cases").deleteOne(query),
+      db.collection("notes").deleteMany({ caseId }),
+      db.collection("events").deleteMany({ caseId }),
+      db.collection("entities").deleteMany({ caseId }),
+      db.collection("openQuestions").deleteMany({ caseId }),
+      db.collection("queries").deleteMany({ caseId }),
+    ]);
+
+    return NextResponse.json({
+      status: "ok",
+      message: `Case "${caseDoc.title}" and all associated evidentiary records have been deleted.`,
+    });
+  } catch (err: any) {
+    return NextResponse.json(
+      { status: "error", message: err?.message || "Failed to delete case" },
+      { status: 500 }
+    );
+  }
+}
