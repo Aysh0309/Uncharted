@@ -89,7 +89,7 @@ export async function embed(text: string): Promise<number[]> {
 
 /**
  * Calls the LLM for structured extraction or conversational analysis.
- * Default model: gemini-1.5-flash
+ * Default model: latest Gemini Flash
  */
 export async function callLLM(
   prompt: string,
@@ -134,8 +134,11 @@ export async function callLLM(
     return data.choices?.[0]?.message?.content || "";
   }
 
-  // Default: Gemini API
-  const model = process.env.LLM_MODEL || "gemini-1.5-flash";
+  // Default: Gemini API (resolves 'latest' to latest Gemini Flash)
+  let model = process.env.LLM_MODEL || "latest";
+  if (model.toLowerCase() === "latest") {
+    model = "gemini-2.0-flash";
+  }
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
   const requestBody: Record<string, unknown> = {

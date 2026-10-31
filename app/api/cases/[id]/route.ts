@@ -3,12 +3,14 @@ import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { canAccessCase } from "@/lib/rbac";
+import { computeSuspectScores, detectGaps } from "@/lib/query";
 
 export const dynamic = "force-dynamic";
 
 /**
  * GET /api/cases/[id]
- * Retrieves single case details, enforcing RBAC access.
+ * Retrieves comprehensive case context (case metadata, timeline events, entities,
+ * notes, open questions, computed suspects & gaps), enforcing RBAC.
  */
 export async function GET(
   req: NextRequest,
@@ -46,6 +48,41 @@ export async function GET(
       );
     }
 
+    // Parallel fetch of all case collections (omitting high-dimensional vectors for fast wire transfer)
+    const [events, entities, notes, openQuestions, queriesHistory] =
+      await Promise.all([
+        db
+          .collection("events")
+          .find({ caseId }, { projection: { embedding: 0 } })
+          .sort({ whenISO: 1, createdAt: 1 })
+          .toArray(),
+        db
+          .collection("entities")
+          .find({ caseId })
+          .sort({ role: 1, name: 1 })
+          .toArray(),
+        db
+          .collection("notes")
+          .find({ caseId }, { projection: { embedding: 0 } })
+          .sort({ createdAt: -1 })
+          .toArray(),
+        db
+          .collection("openQuestions")
+          .find({ caseId, status: "open" })
+          .sort({ createdAt: -1 })
+          .toArray(),
+        db
+          .collection("queries")
+          .find({ caseId })
+          .sort({ createdAt: 1 })
+          .limit(20)
+          .toArray(),
+      ]);
+
+    // Compute suspect ranking & evidentiary gaps in code
+    const suspects = computeSuspectScores(entities, events, notes);
+    const gaps = detectGaps(events, entities, openQuestions);
+
     return NextResponse.json({
       status: "ok",
       case: {
@@ -58,12 +95,55 @@ export async function GET(
         createdBy: caseDoc.createdBy,
         createdAt: caseDoc.createdAt,
       },
+      events: events.map((e) => ({
+        id: e._id.toString(),
+        noteId: e.noteId,
+        what: e.what,
+        who: e.who || [],
+        whenText: e.whenText || "",
+        whenISO: e.whenISO || null,
+        where: e.where || null,
+        confidence: e.confidence ?? 1.0,
+        createdAt: e.createdAt,
+      })),
+      entities: entities.map((ent) => ({
+        id: ent._id.toString(),
+        name: ent.name,
+        aliases: ent.aliases || [],
+        type: ent.type || "person",
+        role: ent.role || "other",
+        alibiStatus: ent.alibiStatus || "unknown",
+        alibiDetails: ent.alibiDetails || "",
+        eventIds: ent.eventIds || [],
+        noteIds: ent.noteIds || [],
+      })),
+      notes: notes.map((n) => ({
+        id: n._id.toString(),
+        text: n.text,
+        authorId: n.authorId,
+        createdAt: n.createdAt,
+      })),
+      openQuestions: openQuestions.map((q) => ({
+        id: q._id.toString(),
+        text: q.text,
+        status: q.status,
+        noteId: q.noteId,
+        createdAt: q.createdAt,
+      })),
+      suspects,
+      gaps,
+      queries: queriesHistory.map((q) => ({
+        id: q._id.toString(),
+        question: q.question,
+        answer: q.answer,
+        citations: q.citations || [],
+        createdAt: q.createdAt,
+      })),
     });
   } catch (err: any) {
     return NextResponse.json(
-      { status: "error", message: err?.message || "Failed to load case" },
+      { status: "error", message: err?.message || "Failed to load case data" },
       { status: 500 }
     );
   }
 }
-

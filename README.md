@@ -1,5 +1,7 @@
 # CaseMemory: Implementation Plan and Antigravity Prompts
 
+>  **Developer Guide & API Documentation**: See [DEV_README.md](./DEV_README.md) for full endpoint documentation, quick-start instructions, demo credentials, and testing scripts.
+
 UNCHARTED 2026 (NEXUS x SVNIT Surat) | Problem statement: Agentic Memory
 
 An agentic memory assistant for criminal case investigations. Investigators type case facts or questions into one chat box. Facts are extracted into structured events and entities, embedded, and stored in MongoDB. Questions are answered only from stored memory, with citations to the source notes.
