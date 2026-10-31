@@ -161,7 +161,7 @@ $$\text{Total Score} = S_{\text{events}} + S_{\text{proximity}} + S_{\text{motiv
 
 ## Pre-Configured Demo Accounts for Hackathon Evaluators
 
-The login portal at `/login` provides **1-click instant login buttons** for all three RBAC clearance levels:
+Pre-configured accounts seeded in the database for all three RBAC clearance levels (roles are exclusively assigned and administered by Level 4 Admin):
 
 | Clearance Level | Role Name | Demo Email | Password | Access Rights |
 |:---:|---|---|---|---|

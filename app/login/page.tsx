@@ -19,7 +19,6 @@ function LoginContent() {
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
-  const [signupRole, setSignupRole] = useState<"investigator" | "viewer" | "admin">("investigator");
   const [showSignupPassword, setShowSignupPassword] = useState(false);
 
   // Status state
@@ -90,7 +89,6 @@ function LoginContent() {
           name: signupName,
           email: signupEmail,
           password: signupPassword,
-          role: signupRole,
         }),
       });
 
@@ -343,19 +341,6 @@ function LoginContent() {
                 />
               </div>
 
-              {/* Role Selection */}
-              <div className="space-y-1">
-                <label className="font-label text-xs font-bold text-on-surface">Operational Role</label>
-                <select
-                  value={signupRole}
-                  onChange={(e: any) => setSignupRole(e.target.value)}
-                  className="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-3.5 py-2.5 text-xs text-on-surface font-label cursor-pointer"
-                >
-                  <option value="investigator">Investigator (Read &amp; Write cases)</option>
-                  <option value="viewer">Viewer (Read-only case queries)</option>
-                  <option value="admin">Administrator (Full case &amp; user access)</option>
-                </select>
-              </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
