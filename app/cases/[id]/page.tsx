@@ -532,35 +532,19 @@ export default function CaseWorkspacePage() {
       ────────────────────────────────────────────────────────────── */}
       <div className="shrink-0 w-full bg-surface-container-low/95 backdrop-blur-md border-b border-outline-variant/40 px-4 lg:px-6 py-2 shadow-xs z-20">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          {/* Left: Security Classification & Case Identifier */}
+          {/* Left: Case Identifier */}
           <div className="flex items-center gap-2.5 min-w-0">
-            {/* Classified Stamp */}
-            <div className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded border border-error/50 bg-error/10 text-error font-mono text-[9px] font-extrabold tracking-widest uppercase">
-              <span className="w-1.5 h-1.5 rounded-full bg-error animate-ping" />
-              RESTRICTED // LE-SENSITIVE
-            </div>
-
-            {/* Radar status icon */}
             <div className="relative flex items-center justify-center w-7 h-7 rounded-lg bg-primary text-on-primary shrink-0 shadow-xs">
-              <span className="material-symbols-outlined text-[16px]">encrypted</span>
+              <span className="material-symbols-outlined text-[16px]">policy</span>
             </div>
 
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="font-headline font-extrabold text-sm text-primary tracking-tight truncate">
-                  {caseMeta.title}
-                </span>
-                <span className="font-mono text-[10px] font-bold text-secondary bg-surface-container-high px-1.5 py-0.5 rounded border border-outline-variant/30">
-                  {caseRefCode}
-                </span>
-              </div>
-              <div className="hidden md:flex items-center gap-2 text-[10px] font-mono text-on-surface-variant">
-                <span>CLEARANCE: LEVEL-{user?.role === "admin" ? "4 (ADMIN)" : user?.role === "investigator" ? "3 (DETECTIVE)" : "1 (VIEWER)"}</span>
-                <span>•</span>
-                <span className="text-secondary font-semibold">STATUS: {caseMeta.status?.toUpperCase() || "ACTIVE"}</span>
-                <span>•</span>
-                <span>CHAIN OF CUSTODY VERIFIED</span>
-              </div>
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="font-headline font-extrabold text-sm text-primary tracking-tight truncate">
+                {caseMeta.title}
+              </span>
+              <span className="font-mono text-[10px] font-bold text-secondary bg-surface-container-high px-1.5 py-0.5 rounded border border-outline-variant/30 shrink-0">
+                {caseRefCode}
+              </span>
             </div>
           </div>
 
@@ -931,15 +915,9 @@ export default function CaseWorkspacePage() {
           </div>
         </section>
 
-<<<<<<< HEAD
-        /* ═════════════════════════════════════════════════════════════
-        ADJUSTABLE RESIZE DIVIDER (Desktop only)
-        ══════════════════════════════════════════════════════════════ */
-=======
         {/* ═════════════════════════════════════════════════════════════
-        ADJUSTABLE RESIZE DIVIDER (Desktop only)
+            ADJUSTABLE RESIZE DIVIDER (Desktop only)
         ══════════════════════════════════════════════════════════════ */}
->>>>>>> refs/remotes/origin/main
         <div
           role="separator"
           tabIndex={0}
