@@ -37,14 +37,6 @@ function LoginContent() {
     }
   }, [urlError]);
 
-  const fillDemo = (demoEmail: string, demoPass: string) => {
-    setMode("login");
-    setLoginEmail(demoEmail);
-    setLoginPassword(demoPass);
-    setError(null);
-    setSuccess(null);
-  };
-
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -167,53 +159,6 @@ function LoginContent() {
           </button>
         </div>
 
-        {/* Demo Quick-Fill Bar (Only in Login Mode) */}
-        {mode === "login" && (
-          <div className="p-3.5 rounded-2xl bg-surface-container-low border border-outline-variant/30 space-y-2 shadow-subtle">
-            <div className="font-label text-[10px] uppercase tracking-wider text-secondary flex items-center justify-between font-bold">
-              <span className="flex items-center gap-1">
-                <span className="material-symbols-outlined text-[14px]">badge</span>
-                Demo Credentials (1-Click Fill)
-              </span>
-              <span className="text-[9px] font-normal text-on-surface-variant">Instant Access</span>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => fillDemo("admin@casememory.local", "AdminPass123!")}
-                className="text-left p-2 rounded-xl bg-surface-container-lowest hover:bg-surface-container border border-outline-variant/20 transition-all font-label shadow-xs cursor-pointer group"
-              >
-                <div className="flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-error" />
-                  <span className="font-bold text-primary block text-[11px] group-hover:text-secondary">Admin</span>
-                </div>
-                <span className="text-on-surface-variant text-[10px] block mt-0.5">All Cases</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => fillDemo("investigator@casememory.local", "InvestPass123!")}
-                className="text-left p-2 rounded-xl bg-surface-container-lowest hover:bg-surface-container border border-outline-variant/20 transition-all font-label shadow-xs cursor-pointer group"
-              >
-                <div className="flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-secondary" />
-                  <span className="font-bold text-secondary block text-[11px]">Investigator</span>
-                </div>
-                <span className="text-on-surface-variant text-[10px] block mt-0.5">Read / Write</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => fillDemo("viewer@casememory.local", "ViewerPass123!")}
-                className="text-left p-2 rounded-xl bg-surface-container-lowest hover:bg-surface-container border border-outline-variant/20 transition-all font-label shadow-xs cursor-pointer group"
-              >
-                <div className="flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-outline" />
-                  <span className="font-bold text-on-surface block text-[11px]">Viewer</span>
-                </div>
-                <span className="text-on-surface-variant text-[10px] block mt-0.5">Ask Queries</span>
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* Google OAuth Missing Setup Notification */}
         {googleMissing && (
