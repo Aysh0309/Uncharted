@@ -94,9 +94,9 @@ export async function embed(text: string): Promise<number[]> {
   }
 
   // Default: Gemini API
-  const primaryEmbedModel = process.env.EMBEDDING_MODEL || "text-embedding-004";
+  const primaryEmbedModel = process.env.EMBEDDING_MODEL || "gemini-embedding-001";
   const embedCandidates = Array.from(
-    new Set([primaryEmbedModel, "text-embedding-004", "gemini-embedding-001"])
+    new Set([primaryEmbedModel, "gemini-embedding-001", "gemini-embedding-2-preview", "text-embedding-004"])
   );
 
   let lastError = "";
@@ -144,7 +144,7 @@ export async function embed(text: string): Promise<number[]> {
 
 /**
  * Calls the LLM for structured extraction or conversational analysis.
- * Supported model env var: LLM_MODEL (defaults to "gemini-1.5-flash" on Gemini).
+ * Supported model env var: LLM_MODEL (defaults to "gemini-3.5-flash" on Gemini).
  * Automatically falls back to supported models on 404 (not found) and 503 (high demand).
  */
 export async function callLLM(
@@ -191,21 +191,22 @@ export async function callLLM(
   }
 
   // Default: Gemini API
-  // Configurable via LLM_MODEL with documented reliable default "gemini-1.5-flash"
-  const envModel = process.env.LLM_MODEL || "gemini-1.5-flash";
+  // Configurable via LLM_MODEL with documented reliable default "gemini-3.5-flash"
+  const envModel = process.env.LLM_MODEL || "gemini-3.5-flash";
   let primaryModel = envModel;
-  if (primaryModel.toLowerCase() === "latest") {
-    primaryModel = "gemini-1.5-flash";
+  if (primaryModel.toLowerCase() === "latest" || primaryModel.includes("1.5") || primaryModel.includes("2.5")) {
+    primaryModel = "gemini-3.5-flash";
   }
 
-  // Candidate chain: user configured model -> gemini-1.5-flash -> gemini-2.0-flash -> gemini-1.5-flash-8b
+  // Candidate chain with verified active models:
   const candidateModels = Array.from(
     new Set([
       primaryModel,
-      "gemini-1.5-flash",
-      "gemini-2.0-flash",
-      "gemini-1.5-flash-8b",
-      "gemini-1.5-pro",
+      "gemini-3.5-flash",
+      "gemini-3.5-flash-lite",
+      "gemini-3.6-flash",
+      "gemini-flash-lite-latest",
+      "gemini-3.1-flash-lite",
     ])
   );
 

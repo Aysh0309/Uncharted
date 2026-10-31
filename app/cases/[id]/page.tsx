@@ -64,6 +64,8 @@ interface ChatMessage {
   id: string;
   sender: "user" | "assistant";
   text: string;
+  userName?: string;
+  userRole?: string;
   type?: "fact" | "question" | "both";
   noteId?: string;
   citations?: Array<{ noteId: string; snippet?: string }>;
@@ -165,13 +167,17 @@ export default function CaseWorkspacePage() {
       setSuspects(data.suspects || []);
       setGaps(data.gaps || []);
 
-      if (messages.length === 0 && data.queries && data.queries.length > 0) {
+      if (Array.isArray(data.chatMessages) && data.chatMessages.length > 0) {
+        setMessages(data.chatMessages);
+      } else if (data.queries && data.queries.length > 0) {
         const history: ChatMessage[] = [];
         for (const q of data.queries) {
           history.push({
             id: `q-usr-${q.id}`,
             sender: "user",
             text: q.question,
+            userName: "Investigator",
+            userRole: "investigator",
             timestamp: q.createdAt,
           });
           history.push({
@@ -316,6 +322,8 @@ export default function CaseWorkspacePage() {
       id: `msg-usr-${Date.now()}`,
       sender: "user",
       text: trimmed,
+      userName: user?.name || "Investigator",
+      userRole: user?.role || "investigator",
       timestamp: new Date().toISOString(),
     };
 
@@ -427,7 +435,7 @@ export default function CaseWorkspacePage() {
     }
   };
 
-  const handleConfirmDiscrepancy = async (d: DiscrepancyItem, chosenOption?: string) => {
+  const handleConfirmDiscrepancy = async (d: DiscrepancyItem) => {
     try {
       if (d.field === "alibiStatus") {
         const targetEntity = entities.find(
@@ -558,57 +566,6 @@ export default function CaseWorkspacePage() {
 
           {/* Right: Actions */}
           <div className="flex items-center gap-2 shrink-0">
-            {/* Adjustable Split Presets (Desktop) */}
-            <div
-              className="hidden lg:flex items-center p-0.5 rounded-lg bg-surface-container border border-outline-variant/30 gap-0.5 font-mono text-[10px]"
-              title="Adjust workspace split layout"
-            >
-              <button
-                type="button"
-                onClick={() => setSplitRatio(35)}
-                title="Matrix Focus (35% Chat / 65% Matrix)"
-                className={`px-2 py-0.5 rounded font-bold transition-all cursor-pointer ${Math.abs(splitRatio - 35) < 3
-                  ? "bg-primary text-on-primary shadow-xs"
-                  : "text-on-surface-variant hover:bg-surface-container-high"
-                  }`}
-              >
-                35:65
-              </button>
-              <button
-                type="button"
-                onClick={() => setSplitRatio(50)}
-                title="Balanced (50% Chat / 50% Matrix)"
-                className={`px-2 py-0.5 rounded font-bold transition-all cursor-pointer ${Math.abs(splitRatio - 50) < 3
-                  ? "bg-primary text-on-primary shadow-xs"
-                  : "text-on-surface-variant hover:bg-surface-container-high"
-                  }`}
-              >
-                50:50
-              </button>
-              <button
-                type="button"
-                onClick={() => setSplitRatio(65)}
-                title="Chat Focus (65% Chat / 35% Matrix)"
-                className={`px-2 py-0.5 rounded font-bold transition-all cursor-pointer ${Math.abs(splitRatio - 65) < 3
-                  ? "bg-primary text-on-primary shadow-xs"
-                  : "text-on-surface-variant hover:bg-surface-container-high"
-                  }`}
-              >
-                65:35
-              </button>
-              <button
-                type="button"
-                onClick={() => setSplitRatio(55)}
-                title="Reset to Default (55:45)"
-                className={`p-1 rounded transition-colors cursor-pointer ${Math.abs(splitRatio - 55) < 2
-                  ? "text-secondary font-bold"
-                  : "text-on-surface-variant hover:text-primary hover:bg-surface-container-high"
-                  }`}
-              >
-                <span className="material-symbols-outlined text-[13px] block">restart_alt</span>
-              </button>
-            </div>
-
             {user?.role === "admin" && (
               <button
                 onClick={handleDeleteCase}
@@ -772,7 +729,7 @@ export default function CaseWorkspacePage() {
                     <div className="flex flex-col items-end gap-1 max-w-xl ml-auto w-full">
                       <div className="flex items-center gap-2 px-1">
                         <span className="font-mono text-[10px] font-bold text-secondary tracking-wider uppercase">
-                          [INVESTIGATOR] • {user?.name || "OFFICER"}
+                          [{m.userRole?.toUpperCase() || "INVESTIGATOR"}] • {m.userName || user?.name || "OFFICER"}
                         </span>
                         <span className="font-mono text-[9px] text-outline">
                           {new Date(m.timestamp).toLocaleTimeString([], {
@@ -783,7 +740,7 @@ export default function CaseWorkspacePage() {
                         </span>
                       </div>
                       <div className="p-3.5 bg-surface-container-high rounded-2xl rounded-tr-xs text-primary shadow-xs border-l-2 border-secondary border-t border-r border-b border-outline-variant/30 w-full">
-                        <p className="text-xs font-medium leading-relaxed select-text">
+                        <p className="text-xs font-medium leading-relaxed select-text whitespace-pre-wrap">
                           {m.text}
                         </p>
                       </div>
@@ -854,6 +811,32 @@ export default function CaseWorkspacePage() {
                             onSelectNote={(nId) => setSelectedNoteId(nId)}
                           />
                         </div>
+
+                        {/* Interactive Discrepancies Alert & Confirmation Card */}
+                        {m.discrepancies && m.discrepancies.length > 0 && (
+                          <div className="p-3 rounded-xl bg-error/10 border border-error/30 space-y-2">
+                            <div className="flex items-center gap-1.5 text-error font-mono text-[10px] font-bold uppercase">
+                              <span className="material-symbols-outlined text-[15px]">notification_important</span>
+                              <span>[POTENTIAL CONTRADICTION / DISCREPANCY DETECTED]</span>
+                            </div>
+                            {m.discrepancies.map((d, dIdx) => (
+                              <div key={dIdx} className="text-xs space-y-1.5 p-2 rounded-lg bg-surface-container-lowest/80 border border-error/20">
+                                <p className="font-sans text-xs text-on-surface">
+                                  {d.description}
+                                </p>
+                                <div className="flex flex-wrap items-center gap-2 pt-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleConfirmDiscrepancy(d)}
+                                    className="px-2.5 py-1 rounded-md bg-primary hover:bg-primary-container text-on-primary font-mono text-[10px] font-bold cursor-pointer"
+                                  >
+                                    Confirm &amp; Update Record
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
 
                         {/* Citations / Source Provenance Footer */}
                         {m.citations && m.citations.length > 0 && (
@@ -953,86 +936,33 @@ export default function CaseWorkspacePage() {
           </div>
         </section>
 
-        {/* ═════════════════════════════════════════════════════════════
+        /* ═════════════════════════════════════════════════════════════
             ADJUSTABLE RESIZE DIVIDER (Desktop only)
         ══════════════════════════════════════════════════════════════ */}
         <div
           role="separator"
           tabIndex={0}
           aria-orientation="vertical"
-          aria-label="Adjust width between Chat and Evidentiary Matrix"
-          aria-valuenow={Math.round(splitRatio)}
-          aria-valuemin={20}
-          aria-valuemax={80}
+          aria-label="Adjust panel split"
           onPointerDown={(e) => {
             e.preventDefault();
             setIsDragging(true);
           }}
           onDoubleClick={() => setSplitRatio(55)}
           onKeyDown={handleSplitterKeyDown}
-          className={`hidden lg:flex flex-col items-center justify-center relative w-2.5 shrink-0 cursor-col-resize select-none z-30 group outline-none transition-colors border-x border-outline-variant/30 ${isDragging
-            ? "bg-secondary/30 border-secondary/60 ring-2 ring-secondary/30"
-            : "bg-surface-container-low hover:bg-secondary/15 hover:border-secondary/40"
+          className={`hidden lg:flex items-center justify-center relative w-1.5 shrink-0 cursor-col-resize select-none z-30 group outline-none transition-colors ${isDragging
+            ? "bg-secondary"
+            : "bg-outline-variant/30 hover:bg-secondary/70"
             }`}
-          title="Drag to resize sections • Double-click to reset (55:45)"
+          title="Drag to resize panels • Double-click to reset"
         >
-          {/* Center line */}
+          {/* Subtle minimal grab notch */}
           <div
-            className={`absolute inset-y-0 w-px transition-colors ${isDragging ? "bg-secondary" : "bg-outline-variant/50 group-hover:bg-secondary/70"
+            className={`w-0.5 h-7 rounded-full transition-colors ${isDragging
+              ? "bg-secondary-fixed"
+              : "bg-outline-variant/60 group-hover:bg-secondary"
               }`}
           />
-
-          {/* Tactile Grab Handle Pill with collapse/expand arrows */}
-          <div
-            className={`relative z-10 flex flex-col items-center justify-center py-1.5 px-0.5 rounded-full border shadow-xs transition-all ${isDragging
-              ? "bg-secondary text-on-primary border-secondary scale-110 shadow-md ring-2 ring-secondary/30"
-              : "bg-surface-container-high border-outline-variant/40 text-on-surface-variant group-hover:border-secondary/60 group-hover:bg-secondary-fixed group-hover:text-on-secondary-fixed"
-              }`}
-          >
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setSplitRatio((prev) => (prev > 30 ? 25 : 55));
-              }}
-              title="Minimize Chat (25%) / Restore"
-              className="p-0.5 hover:text-primary transition-colors cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[12px] leading-none block">
-                chevron_left
-              </span>
-            </button>
-            <span className="material-symbols-outlined text-[13px] leading-none my-0.5 select-none pointer-events-none">
-              drag_indicator
-            </span>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setSplitRatio((prev) => (prev < 70 ? 75 : 55));
-              }}
-              title="Maximize Chat (75%) / Restore"
-              className="p-0.5 hover:text-primary transition-colors cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[12px] leading-none block">
-                chevron_right
-              </span>
-            </button>
-          </div>
-
-          {/* Floating live percentage pill during hover or drag */}
-          <div
-            className={`absolute top-4 pointer-events-none transition-all duration-150 transform -translate-x-1/2 left-1/2 whitespace-nowrap z-40 ${isDragging
-              ? "opacity-100 scale-100"
-              : "opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100"
-              }`}
-          >
-            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-primary text-on-primary font-mono text-[9px] font-bold shadow-lg border border-outline-variant/40 tracking-wider">
-              <span>CHAT {Math.round(splitRatio)}%</span>
-              <span className="text-secondary">•</span>
-              <span>MATRIX {Math.round(100 - splitRatio)}%</span>
-            </div>
-          </div>
         </div>
 
         {/* ═════════════════════════════════════════════════════════════
@@ -1422,7 +1352,7 @@ export default function CaseWorkspacePage() {
           3. ENTITY & ALIBI QUICK EDITOR MODAL
       ────────────────────────────────────────────────────────────── */}
       {editingEntity && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-scrim/60 backdrop-blur-xs animate-fadeIn">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
           <div className="w-full max-w-md bg-surface-container-lowest rounded-2xl border border-outline-variant/40 shadow-xl p-5 space-y-4">
             <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3">
               <div className="flex items-center gap-2">

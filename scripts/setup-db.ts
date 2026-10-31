@@ -98,6 +98,10 @@ async function setupDatabase() {
     await db.collection("queries").createIndex({ caseId: 1, createdAt: -1 });
     console.log("  ✓ queries: { caseId: 1, createdAt: -1 }");
 
+    // messages: chatbox timeline history for investigators & collaborators
+    await db.collection("messages").createIndex({ caseId: 1, createdAt: 1 });
+    console.log("  ✓ messages: { caseId: 1, createdAt: 1 }");
+
     // rateLimits: TTL index (prunes entries older than 120s automatically)
     await db.collection("rateLimits").createIndex({ createdAt: 1 }, { expireAfterSeconds: 120 });
     await db.collection("rateLimits").createIndex({ userId: 1, createdAt: -1 });
