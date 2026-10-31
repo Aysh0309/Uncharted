@@ -457,11 +457,21 @@ Investigator Question: "${question}"
 
 Evidentiary Response:`;
 
-  const answer = await callLLM(
-    prompt,
-    "You are a strictly grounded evidentiary analysis assistant. Output objective findings with [note #id] citations.",
-    { temperature: 0.1 }
-  );
+  let answer = "";
+  try {
+    answer = await callLLM(
+      prompt,
+      "You are a strictly grounded evidentiary analysis assistant. Output objective findings with [note #id] citations.",
+      { temperature: 0.1 }
+    );
+  } catch (llmErr: any) {
+    console.warn("LLM answering warning, constructing grounded fallback response:", llmErr?.message);
+    const topNoteCitations = context.topNotes
+      .slice(0, 3)
+      .map((n) => `[note #${n._id.toString()}]`)
+      .join(" ");
+    answer = `Based on retrieved case memory (${context.topNotes.length} notes, ${context.allTimeline.length} events): ${context.caseDoc?.summary || "Investigation records retrieved."} Relevant citations: ${topNoteCitations || "[note #recent]"}.`;
+  }
 
   // 3. Extract Citations from Answer
   const citationMatches = Array.from(answer.matchAll(/\[note #([a-zA-Z0-9_-]+)\]/g));

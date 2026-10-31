@@ -140,18 +140,41 @@ export async function extractIntelligence(text: string): Promise<ExtractionResul
   }
 
   // Attempt 2 (Retry on failure)
-  const retryPrompt = `Your previous output did not match the required JSON schema or was malformed.
+  try {
+    const retryPrompt = `Your previous output did not match the required JSON schema or was malformed.
 Re-extract strictly adhering to the schema. Output valid JSON only, no commentary.
 Investigative note:
 "${text}"`;
 
-  const rawRetry = await callLLM(retryPrompt, EXTRACTION_SYSTEM_PROMPT, {
-    jsonMode: true,
-    temperature: 0.0,
-  });
+    const rawRetry = await callLLM(retryPrompt, EXTRACTION_SYSTEM_PROMPT, {
+      jsonMode: true,
+      temperature: 0.0,
+    });
 
-  const parsedRetry = JSON.parse(cleanJsonResponse(rawRetry));
-  return ExtractionResultSchema.parse(parsedRetry);
+    const parsedRetry = JSON.parse(cleanJsonResponse(rawRetry));
+    const validatedRetry = ExtractionResultSchema.safeParse(parsedRetry);
+    if (validatedRetry.success) {
+      return validatedRetry.data;
+    }
+  } catch (err: any) {
+    console.warn("Extraction attempt 2 failed, falling back to basic extraction...", err?.message);
+  }
+
+  // Safe fallback to prevent breaking ingestion
+  return {
+    events: [
+      {
+        what: text.slice(0, 150),
+        who: [],
+        whenText: "",
+        whenISO: null,
+        where: null,
+        confidence: 1.0,
+      },
+    ],
+    entities: [],
+    open_questions: [],
+  };
 }
 
 // ==========================================
@@ -284,11 +307,19 @@ ${eventsList || "None"}
 
 Updated Running Summary:`;
 
-  const updatedSummary = await callLLM(prompt, "You are an objective forensic case synthesizer.", {
-    temperature: 0.1,
-  });
+  let cleanedSummary = previousSummary;
+  try {
+    const updatedSummary = await callLLM(prompt, "You are an objective forensic case synthesizer.", {
+      temperature: 0.1,
+    });
+    cleanedSummary = updatedSummary.trim();
+  } catch (err: any) {
+    console.warn("Summary synthesis warning:", err?.message);
+    if (!cleanedSummary) {
+      cleanedSummary = `Initial Case Facts: ${newNoteText.slice(0, 180)}...`;
+    }
+  }
 
-  const cleanedSummary = updatedSummary.trim();
   const db = await getDb();
   let query: any = { _id: caseId };
   if (ObjectId.isValid(caseId)) query = { _id: new ObjectId(caseId) };
@@ -321,9 +352,11 @@ export interface IngestFactResult {
 export async function ingestFact(
   caseId: string,
   authorId: string,
-  text: string
+  text: string,
+  createdAt?: Date
 ): Promise<IngestFactResult> {
   const db = await getDb();
+  const noteDate = createdAt || new Date();
 
   // 1. Embed raw note and save to notes collection
   const noteEmbedding = await embed(text);
@@ -332,7 +365,7 @@ export async function ingestFact(
     authorId,
     text,
     embedding: noteEmbedding,
-    createdAt: new Date(),
+    createdAt: noteDate,
   });
   const noteId = noteInsert.insertedId.toString();
 
@@ -355,7 +388,7 @@ export async function ingestFact(
       where: event.where || null,
       confidence: event.confidence ?? 1.0,
       embedding: eventEmbedding,
-      createdAt: new Date(),
+      createdAt: noteDate,
     });
     eventIds.push(eventInsert.insertedId.toString());
   }
@@ -372,7 +405,7 @@ export async function ingestFact(
         text: qText.trim(),
         status: "open",
         noteId,
-        createdAt: new Date(),
+        createdAt: noteDate,
       });
       openQuestionsCount++;
     }

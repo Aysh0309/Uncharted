@@ -27,18 +27,29 @@ export function getEmbeddingDimension(): number {
 async function fetchWithRetry(
   url: string,
   options: RequestInit,
-  retries = 2,
-  backoffMs = 800
+  retries = 1,
+  backoffMs = 600
 ): Promise<Response> {
   for (let attempt = 0; attempt <= retries; attempt++) {
-    const res = await fetch(url, options);
-    if (res.ok || (res.status !== 429 && res.status !== 503)) {
-      return res;
-    }
-    if (attempt < retries) {
-      await new Promise((resolve) => setTimeout(resolve, backoffMs * (attempt + 1)));
-    } else {
-      return res;
+    try {
+      const res = await fetch(url, {
+        ...options,
+        signal: AbortSignal.timeout(15000), // 15s max timeout to prevent indefinite hangs
+      });
+      if (res.ok || (res.status !== 429 && res.status !== 503)) {
+        return res;
+      }
+      if (attempt < retries) {
+        await new Promise((resolve) => setTimeout(resolve, backoffMs * (attempt + 1)));
+      } else {
+        return res;
+      }
+    } catch (err: any) {
+      if (attempt < retries) {
+        await new Promise((resolve) => setTimeout(resolve, backoffMs * (attempt + 1)));
+      } else {
+        throw err;
+      }
     }
   }
   return fetch(url, options);
@@ -163,14 +174,23 @@ export async function callLLM(
     return data.choices?.[0]?.message?.content || "";
   }
 
-  // Default: Gemini API (resolves 'latest' to latest Gemini Flash)
-  let model = process.env.LLM_MODEL || "latest";
-  if (model.toLowerCase() === "latest" || model === "gemini-2.0-flash") {
-    model = "gemini-3.8-flash";
+  // Default: Gemini API - dynamically attempts available models if a model is experiencing high demand (503)
+  const envModel = process.env.LLM_MODEL || "gemini-flash-lite-latest";
+  let primaryModel = envModel;
+  if (primaryModel.toLowerCase() === "latest" || primaryModel === "gemini-2.0-flash" || primaryModel === "gemini-2.5-flash") {
+    primaryModel = "gemini-flash-lite-latest";
   }
-  const fallbackModel = "gemini-2.5-flash";
 
-  let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  // Ordered list of viable models to try in case of 503 high demand or 429
+  const candidateModels = Array.from(
+    new Set([
+      primaryModel,
+      "gemini-flash-lite-latest",
+      "gemini-3.5-flash",
+      "gemini-3-flash-preview",
+      "gemini-3.8-flash",
+    ])
+  ).filter((m) => m !== "gemini-2.0-flash" && m !== "gemini-2.5-flash");
 
   const requestBody: Record<string, unknown> = {
     contents: [
@@ -191,37 +211,40 @@ export async function callLLM(
     };
   }
 
-  let response = await fetchWithRetry(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(requestBody),
-  });
+  let lastErrorText = "";
+  for (const modelCandidate of candidateModels) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelCandidate}:generateContent?key=${apiKey}`;
+    try {
+      const response = await fetchWithRetry(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+      });
 
-  // If 503 unavailable on primary model, attempt graceful fallback to secondary model
-  if (response.status === 503 && model !== fallbackModel) {
-    console.warn(`Primary model ${model} returned 503 (high demand). Retrying with ${fallbackModel}...`);
-    url = `https://generativelanguage.googleapis.com/v1beta/models/${fallbackModel}:generateContent?key=${apiKey}`;
-    response = await fetchWithRetry(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestBody),
-    });
+      if (response.ok) {
+        const data = await response.json();
+        const candidate = data.candidates?.[0];
+        const text = candidate?.content?.parts?.[0]?.text;
+        if (typeof text === "string") {
+          return text;
+        }
+      }
+
+      // If 503 or 429, try next candidate
+      lastErrorText = await response.text();
+      if (response.status === 503 || response.status === 429 || response.status === 404) {
+        console.warn(`Model ${modelCandidate} returned (${response.status}), trying next candidate...`);
+        continue;
+      }
+
+      throw new Error(`LLM API error (${response.status}): ${lastErrorText}`);
+    } catch (err: any) {
+      lastErrorText = err.message || String(err);
+      console.warn(`Model ${modelCandidate} failed (${err.message}), trying next candidate...`);
+    }
   }
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`LLM API error (${response.status}): ${errorText}`);
-  }
-
-  const data = await response.json();
-  const candidate = data.candidates?.[0];
-  const text = candidate?.content?.parts?.[0]?.text;
-
-  if (typeof text !== "string") {
-    throw new Error("LLM did not return text response");
-  }
-
-  return text;
+  throw new Error(`All LLM candidate models failed. Last error: ${lastErrorText}`);
 }
 
 

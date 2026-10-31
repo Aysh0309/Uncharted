@@ -9,6 +9,7 @@
     "lint": "next lint",
     "setup:db": "tsx scripts/setup-db.ts",
     "seed:users": "tsx scripts/seed-users.ts",
+    "seed": "tsx scripts/seed.ts",
     "test:ingest": "tsx scripts/test-ingest.ts",
     "test:query": "tsx scripts/test-query.ts"
   },
