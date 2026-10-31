@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { UserSession } from "@/lib/auth";
 import { NoteDrawer } from "@/components/note-drawer";
 import { FormattedEvidentiaryText } from "@/components/formatted-evidentiary-text";
@@ -67,11 +67,13 @@ interface ChatMessage {
 
 export default function CaseWorkspacePage() {
   const params = useParams();
+  const router = useRouter();
   const caseId = params.id as string;
 
   const [user, setUser] = useState<UserSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingCase, setDeletingCase] = useState(false);
 
   // Case Data
   const [caseMeta, setCaseMeta] = useState<any>(null);
@@ -157,6 +159,27 @@ export default function CaseWorkspacePage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, submitting]);
+
+  const handleDeleteCase = async () => {
+    const confirmed = window.confirm(
+      `Permanently delete "${caseMeta?.title || "this case"}"?\n\nThis will remove the case file along with all of its notes, events, and tracked entities. This action cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    setDeletingCase(true);
+    try {
+      const res = await fetch(`/api/cases/${caseId}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to delete case");
+
+      addToast("success", "Case deleted successfully");
+      router.push("/cases");
+      router.refresh();
+    } catch (err: any) {
+      addToast("error", err.message || "Delete failed");
+      setDeletingCase(false);
+    }
+  };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -290,17 +313,23 @@ export default function CaseWorkspacePage() {
                 {caseMeta.title}
               </span>
             </div>
-
-            <div className="hidden sm:flex items-center gap-2 text-on-surface-variant font-label text-xs">
-              <span className="w-1 h-1 rounded-full bg-outline-variant" />
-              <span>{events.length} events across {notes.length} verified notes</span>
-              <span className="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-semibold text-[10px]">
-                100% Grounded
-              </span>
-            </div>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {user?.role === "admin" && (
+              <button
+                onClick={handleDeleteCase}
+                disabled={deletingCase}
+                title="Permanently delete this case"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-error-container/30 hover:bg-error-container text-on-error-container transition-all font-label text-xs font-semibold shadow-xs cursor-pointer disabled:opacity-50"
+              >
+                <span className="material-symbols-outlined text-[15px]">
+                  {deletingCase ? "sync" : "delete"}
+                </span>
+                <span>Delete Case</span>
+              </button>
+            )}
+
             <button
               onClick={() => setShowSummary(!showSummary)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface transition-all font-label text-xs shadow-xs cursor-pointer"
