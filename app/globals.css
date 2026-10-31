@@ -51,3 +51,43 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #705a4d;
 }
+
+/* Atmospheric animations for landing page */
+@keyframes floatSlow {
+  0%, 100% {
+    transform: scale(1.04) translate(0, 0);
+  }
+  50% {
+    transform: scale(1.07) translate(-8px, -12px);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 0.25;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-float-slow {
+  animation: floatSlow 22s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 8s ease-in-out infinite alternate;
+}
+
