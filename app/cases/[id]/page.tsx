@@ -97,8 +97,8 @@ export default function CaseWorkspacePage() {
 
   // View States
   const [showSummary, setShowSummary] = useState(false);
-<<<<<<< HEAD
-  const [activeRightTab, setActiveRightTab] = useState<"timeline" | "suspects" | "entities" | "gaps">("suspects");
+  const [activeRightTab, setActiveRightTab] = useState<"timeline" | "suspects" | "entities" | "gaps">("timeline");
+  const [mobileTab, setMobileTab] = useState<"chat" | "timeline">("chat");
 
   // Entity Quick Editor Modal State
   const [editingEntity, setEditingEntity] = useState<CaseEntity | null>(null);
@@ -108,9 +108,6 @@ export default function CaseWorkspacePage() {
   const [editAlibiDetails, setEditAlibiDetails] = useState("");
   const [editAliases, setEditAliases] = useState("");
   const [savingEntity, setSavingEntity] = useState(false);
-=======
-  const [activeRightTab, setActiveRightTab] = useState<"timeline" | "suspects" | "gaps">("timeline");
-  const [mobileTab, setMobileTab] = useState<"chat" | "timeline">("chat");
 
   // Adjustable Split Pane State
   const [splitRatio, setSplitRatio] = useState<number>(55);
@@ -118,7 +115,6 @@ export default function CaseWorkspacePage() {
   const [isLgScreen, setIsLgScreen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const workspaceContainerRef = useRef<HTMLDivElement>(null);
->>>>>>> refs/remotes/origin/main
 
   // Chat State
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -140,7 +136,7 @@ export default function CaseWorkspacePage() {
         if (Array.isArray(parsed) && parsed.length > 0) {
           cleanMsg = parsed.map((p) => p.message || p.code || "Validation error").join("; ");
         }
-      } catch {}
+      } catch { }
     } else if (typeof message === "object") {
       cleanMsg = message?.message || "Execution notice";
     }
@@ -221,7 +217,7 @@ export default function CaseWorkspacePage() {
           setSplitRatio(parsed);
         }
       }
-    } catch {}
+    } catch { }
 
     return () => window.removeEventListener("resize", checkScreen);
   }, []);
@@ -267,7 +263,7 @@ export default function CaseWorkspacePage() {
     if (mounted && !isDragging) {
       try {
         localStorage.setItem("casememory_split_ratio", splitRatio.toFixed(1));
-      } catch {}
+      } catch { }
     }
   }, [isDragging, splitRatio, mounted]);
 
@@ -343,13 +339,8 @@ export default function CaseWorkspacePage() {
         const assistantMsg: ChatMessage = {
           id: `msg-ast-${Date.now()}`,
           sender: "assistant",
-<<<<<<< HEAD
-          text: data.message || `Extracted ${data.eventsSaved} event(s) and synchronized ${
-=======
-          text: `Evidentiary intake complete: Extracted ${data.eventsSaved} timeline event(s) and synchronized ${
->>>>>>> refs/remotes/origin/main
-            data.entitiesCreated + data.entitiesUpdated
-          } POI entity record(s) into case memory vault.`,
+          text: `Evidentiary intake complete: Extracted ${data.eventsSaved} timeline event(s) and synchronized ${data.entitiesCreated + data.entitiesUpdated
+            } POI entity record(s) into case memory vault.`,
           type: "fact",
           noteId: data.noteId,
           extractedStats: {
@@ -576,11 +567,10 @@ export default function CaseWorkspacePage() {
                 type="button"
                 onClick={() => setSplitRatio(35)}
                 title="Matrix Focus (35% Chat / 65% Matrix)"
-                className={`px-2 py-0.5 rounded font-bold transition-all cursor-pointer ${
-                  Math.abs(splitRatio - 35) < 3
-                    ? "bg-primary text-on-primary shadow-xs"
-                    : "text-on-surface-variant hover:bg-surface-container-high"
-                }`}
+                className={`px-2 py-0.5 rounded font-bold transition-all cursor-pointer ${Math.abs(splitRatio - 35) < 3
+                  ? "bg-primary text-on-primary shadow-xs"
+                  : "text-on-surface-variant hover:bg-surface-container-high"
+                  }`}
               >
                 35:65
               </button>
@@ -588,11 +578,10 @@ export default function CaseWorkspacePage() {
                 type="button"
                 onClick={() => setSplitRatio(50)}
                 title="Balanced (50% Chat / 50% Matrix)"
-                className={`px-2 py-0.5 rounded font-bold transition-all cursor-pointer ${
-                  Math.abs(splitRatio - 50) < 3
-                    ? "bg-primary text-on-primary shadow-xs"
-                    : "text-on-surface-variant hover:bg-surface-container-high"
-                }`}
+                className={`px-2 py-0.5 rounded font-bold transition-all cursor-pointer ${Math.abs(splitRatio - 50) < 3
+                  ? "bg-primary text-on-primary shadow-xs"
+                  : "text-on-surface-variant hover:bg-surface-container-high"
+                  }`}
               >
                 50:50
               </button>
@@ -600,11 +589,10 @@ export default function CaseWorkspacePage() {
                 type="button"
                 onClick={() => setSplitRatio(65)}
                 title="Chat Focus (65% Chat / 35% Matrix)"
-                className={`px-2 py-0.5 rounded font-bold transition-all cursor-pointer ${
-                  Math.abs(splitRatio - 65) < 3
-                    ? "bg-primary text-on-primary shadow-xs"
-                    : "text-on-surface-variant hover:bg-surface-container-high"
-                }`}
+                className={`px-2 py-0.5 rounded font-bold transition-all cursor-pointer ${Math.abs(splitRatio - 65) < 3
+                  ? "bg-primary text-on-primary shadow-xs"
+                  : "text-on-surface-variant hover:bg-surface-container-high"
+                  }`}
               >
                 65:35
               </button>
@@ -612,11 +600,10 @@ export default function CaseWorkspacePage() {
                 type="button"
                 onClick={() => setSplitRatio(55)}
                 title="Reset to Default (55:45)"
-                className={`p-1 rounded transition-colors cursor-pointer ${
-                  Math.abs(splitRatio - 55) < 2
-                    ? "text-secondary font-bold"
-                    : "text-on-surface-variant hover:text-primary hover:bg-surface-container-high"
-                }`}
+                className={`p-1 rounded transition-colors cursor-pointer ${Math.abs(splitRatio - 55) < 2
+                  ? "text-secondary font-bold"
+                  : "text-on-surface-variant hover:text-primary hover:bg-surface-container-high"
+                  }`}
               >
                 <span className="material-symbols-outlined text-[13px] block">restart_alt</span>
               </button>
@@ -638,11 +625,10 @@ export default function CaseWorkspacePage() {
 
             <button
               onClick={() => setShowSummary(!showSummary)}
-              className={`inline-flex items-center gap-1 px-3 py-1 rounded-lg transition-all font-mono text-[11px] font-bold border cursor-pointer ${
-                showSummary
-                  ? "bg-secondary-fixed text-on-secondary-fixed border-secondary"
-                  : "bg-surface-container hover:bg-surface-container-high text-primary border-outline-variant/40"
-              }`}
+              className={`inline-flex items-center gap-1 px-3 py-1 rounded-lg transition-all font-mono text-[11px] font-bold border cursor-pointer ${showSummary
+                ? "bg-secondary-fixed text-on-secondary-fixed border-secondary"
+                : "bg-surface-container hover:bg-surface-container-high text-primary border-outline-variant/40"
+                }`}
             >
               <span className="material-symbols-outlined text-[15px]">neurology</span>
               <span>WORKING MEMORY</span>
@@ -678,22 +664,20 @@ export default function CaseWorkspacePage() {
       <div className="lg:hidden shrink-0 flex items-center border-b border-outline-variant/30 bg-surface-container-low p-1.5 gap-1.5">
         <button
           onClick={() => setMobileTab("chat")}
-          className={`flex-1 py-1.5 px-3 rounded-lg font-mono text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
-            mobileTab === "chat"
-              ? "bg-primary text-on-primary shadow-xs"
-              : "text-on-surface-variant hover:bg-surface-container"
-          }`}
+          className={`flex-1 py-1.5 px-3 rounded-lg font-mono text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${mobileTab === "chat"
+            ? "bg-primary text-on-primary shadow-xs"
+            : "text-on-surface-variant hover:bg-surface-container"
+            }`}
         >
           <span className="material-symbols-outlined text-[15px]">forum</span>
           <span>SEC-01: CHAT LOG</span>
         </button>
         <button
           onClick={() => setMobileTab("timeline")}
-          className={`flex-1 py-1.5 px-3 rounded-lg font-mono text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
-            mobileTab === "timeline"
-              ? "bg-primary text-on-primary shadow-xs"
-              : "text-on-surface-variant hover:bg-surface-container"
-          }`}
+          className={`flex-1 py-1.5 px-3 rounded-lg font-mono text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${mobileTab === "timeline"
+            ? "bg-primary text-on-primary shadow-xs"
+            : "text-on-surface-variant hover:bg-surface-container"
+            }`}
         >
           <span className="material-symbols-outlined text-[15px]">timeline</span>
           <span>SEC-02: TIMELINES ({events.length})</span>
@@ -716,13 +700,11 @@ export default function CaseWorkspacePage() {
               ? { width: `${splitRatio}%`, flex: `0 0 ${splitRatio}%` }
               : undefined
           }
-          className={`flex-1 flex flex-col h-full min-h-0 overflow-hidden border-b lg:border-b-0 bg-surface ${
-            isDragging
-              ? "pointer-events-none select-none"
-              : "transition-[width,flex-basis] duration-150 ease-out"
-          } ${
-            mobileTab === "chat" ? "flex" : "hidden lg:flex"
-          }`}
+          className={`flex-1 flex flex-col h-full min-h-0 overflow-hidden border-b lg:border-b-0 bg-surface ${isDragging
+            ? "pointer-events-none select-none"
+            : "transition-[width,flex-basis] duration-150 ease-out"
+            } ${mobileTab === "chat" ? "flex" : "hidden lg:flex"
+            }`}
         >
           {/* Section 1 Header */}
           <div className="shrink-0 px-4 py-2.5 border-b border-outline-variant/30 bg-surface-container-low/70 flex items-center justify-between gap-2">
@@ -988,27 +970,24 @@ export default function CaseWorkspacePage() {
           }}
           onDoubleClick={() => setSplitRatio(55)}
           onKeyDown={handleSplitterKeyDown}
-          className={`hidden lg:flex flex-col items-center justify-center relative w-2.5 shrink-0 cursor-col-resize select-none z-30 group outline-none transition-colors border-x border-outline-variant/30 ${
-            isDragging
-              ? "bg-secondary/30 border-secondary/60 ring-2 ring-secondary/30"
-              : "bg-surface-container-low hover:bg-secondary/15 hover:border-secondary/40"
-          }`}
+          className={`hidden lg:flex flex-col items-center justify-center relative w-2.5 shrink-0 cursor-col-resize select-none z-30 group outline-none transition-colors border-x border-outline-variant/30 ${isDragging
+            ? "bg-secondary/30 border-secondary/60 ring-2 ring-secondary/30"
+            : "bg-surface-container-low hover:bg-secondary/15 hover:border-secondary/40"
+            }`}
           title="Drag to resize sections • Double-click to reset (55:45)"
         >
           {/* Center line */}
           <div
-            className={`absolute inset-y-0 w-px transition-colors ${
-              isDragging ? "bg-secondary" : "bg-outline-variant/50 group-hover:bg-secondary/70"
-            }`}
+            className={`absolute inset-y-0 w-px transition-colors ${isDragging ? "bg-secondary" : "bg-outline-variant/50 group-hover:bg-secondary/70"
+              }`}
           />
 
           {/* Tactile Grab Handle Pill with collapse/expand arrows */}
           <div
-            className={`relative z-10 flex flex-col items-center justify-center py-1.5 px-0.5 rounded-full border shadow-xs transition-all ${
-              isDragging
-                ? "bg-secondary text-on-primary border-secondary scale-110 shadow-md ring-2 ring-secondary/30"
-                : "bg-surface-container-high border-outline-variant/40 text-on-surface-variant group-hover:border-secondary/60 group-hover:bg-secondary-fixed group-hover:text-on-secondary-fixed"
-            }`}
+            className={`relative z-10 flex flex-col items-center justify-center py-1.5 px-0.5 rounded-full border shadow-xs transition-all ${isDragging
+              ? "bg-secondary text-on-primary border-secondary scale-110 shadow-md ring-2 ring-secondary/30"
+              : "bg-surface-container-high border-outline-variant/40 text-on-surface-variant group-hover:border-secondary/60 group-hover:bg-secondary-fixed group-hover:text-on-secondary-fixed"
+              }`}
           >
             <button
               type="button"
@@ -1043,11 +1022,10 @@ export default function CaseWorkspacePage() {
 
           {/* Floating live percentage pill during hover or drag */}
           <div
-            className={`absolute top-4 pointer-events-none transition-all duration-150 transform -translate-x-1/2 left-1/2 whitespace-nowrap z-40 ${
-              isDragging
-                ? "opacity-100 scale-100"
-                : "opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100"
-            }`}
+            className={`absolute top-4 pointer-events-none transition-all duration-150 transform -translate-x-1/2 left-1/2 whitespace-nowrap z-40 ${isDragging
+              ? "opacity-100 scale-100"
+              : "opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100"
+              }`}
           >
             <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-primary text-on-primary font-mono text-[9px] font-bold shadow-lg border border-outline-variant/40 tracking-wider">
               <span>CHAT {Math.round(splitRatio)}%</span>
@@ -1062,11 +1040,9 @@ export default function CaseWorkspacePage() {
         ══════════════════════════════════════════════════════════════ */}
         <section
           style={mounted && isLgScreen ? { flex: "1 1 0%", minWidth: 0 } : undefined}
-          className={`w-full flex-1 flex flex-col h-full min-h-0 overflow-hidden bg-surface-container-lowest/50 ${
-            isDragging ? "pointer-events-none select-none" : ""
-          } ${
-            mobileTab === "timeline" ? "flex" : "hidden lg:flex"
-          }`}
+          className={`w-full flex-1 flex flex-col h-full min-h-0 overflow-hidden bg-surface-container-lowest/50 ${isDragging ? "pointer-events-none select-none" : ""
+            } ${mobileTab === "timeline" ? "flex" : "hidden lg:flex"
+            }`}
         >
           {/* Section 2 Header & Classified Tabs */}
           <div className="shrink-0 px-4 py-2.5 border-b border-outline-variant/30 bg-surface-container-low/70 flex flex-col gap-2">
@@ -1094,11 +1070,10 @@ export default function CaseWorkspacePage() {
             <div className="flex items-center p-1 rounded-lg bg-surface-container border border-outline-variant/30 gap-1">
               <button
                 onClick={() => setActiveRightTab("timeline")}
-                className={`flex-1 py-1 px-2 rounded font-mono text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                  activeRightTab === "timeline"
-                    ? "bg-primary text-on-primary shadow-xs"
-                    : "text-on-surface-variant hover:bg-surface-container-high"
-                }`}
+                className={`flex-1 py-1 px-2 rounded font-mono text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${activeRightTab === "timeline"
+                  ? "bg-primary text-on-primary shadow-xs"
+                  : "text-on-surface-variant hover:bg-surface-container-high"
+                  }`}
               >
                 <span className="material-symbols-outlined text-[14px]">schedule</span>
                 <span>TIMELINE ({events.length})</span>
@@ -1106,23 +1081,32 @@ export default function CaseWorkspacePage() {
 
               <button
                 onClick={() => setActiveRightTab("suspects")}
-                className={`flex-1 py-1 px-2 rounded font-mono text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                  activeRightTab === "suspects"
-                    ? "bg-primary text-on-primary shadow-xs"
-                    : "text-on-surface-variant hover:bg-surface-container-high"
-                }`}
+                className={`flex-1 py-1 px-2 rounded font-mono text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${activeRightTab === "suspects"
+                  ? "bg-primary text-on-primary shadow-xs"
+                  : "text-on-surface-variant hover:bg-surface-container-high"
+                  }`}
               >
                 <span className="material-symbols-outlined text-[14px]">person_alert</span>
                 <span>SUSPECTS ({suspects.length})</span>
               </button>
 
               <button
+                onClick={() => setActiveRightTab("entities")}
+                className={`flex-1 py-1 px-2 rounded font-mono text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${activeRightTab === "entities"
+                  ? "bg-primary text-on-primary shadow-xs"
+                  : "text-on-surface-variant hover:bg-surface-container-high"
+                  }`}
+              >
+                <span className="material-symbols-outlined text-[14px]">badge</span>
+                <span>ENTITIES ({entities.length})</span>
+              </button>
+
+              <button
                 onClick={() => setActiveRightTab("gaps")}
-                className={`flex-1 py-1 px-2 rounded font-mono text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                  activeRightTab === "gaps"
-                    ? "bg-primary text-on-primary shadow-xs"
-                    : "text-on-surface-variant hover:bg-surface-container-high"
-                }`}
+                className={`flex-1 py-1 px-2 rounded font-mono text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${activeRightTab === "gaps"
+                  ? "bg-primary text-on-primary shadow-xs"
+                  : "text-on-surface-variant hover:bg-surface-container-high"
+                  }`}
               >
                 <span className="material-symbols-outlined text-[14px]">warning</span>
                 <span>GAPS ({gaps.length})</span>
@@ -1275,13 +1259,120 @@ export default function CaseWorkspacePage() {
                           <span className="text-on-surface font-semibold">{s.breakdown.alibi.description}</span>
                         </div>
                       </div>
+
+                      {/* Action: Update Alibi & Entity Records */}
+                      <div className="pt-1.5 border-t border-outline-variant/20 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const found = entities.find(
+                              (e) => e.name.toLowerCase() === s.name.toLowerCase()
+                            );
+                            if (found) {
+                              openEntityEditor(found);
+                            } else {
+                              setEditingEntity({
+                                id: "",
+                                name: s.name,
+                                aliases: [],
+                                type: "person",
+                                role: s.role || "suspect",
+                                alibiStatus: (s.breakdown.alibi.status as any) || "unknown",
+                                eventIds: [],
+                                noteIds: [],
+                              });
+                              setEditName(s.name);
+                              setEditRole(s.role || "suspect");
+                              setEditAlibiStatus(s.breakdown.alibi.status || "unknown");
+                              setEditAlibiDetails("");
+                              setEditAliases("");
+                            }
+                          }}
+                          className="font-mono text-[10px] text-primary hover:text-primary-container font-bold flex items-center gap-1 cursor-pointer bg-surface-container px-2.5 py-1 rounded-md border border-outline-variant/30 hover:border-primary transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[13px]">edit_note</span>
+                          <span>UPDATE ALIBI / DOSSIER</span>
+                        </button>
+                      </div>
                     </div>
                   ))
                 )}
               </div>
             )}
 
-            {/* ─── TAB 3: Evidentiary Gaps & Discrepancies ─── */}
+            {/* ─── TAB 3: Tracked POI & Evidence Entities ─── */}
+            {activeRightTab === "entities" && (
+              <div className="flex flex-col gap-2.5">
+                {entities.length === 0 ? (
+                  <div className="p-8 text-center text-xs font-mono text-on-surface-variant rounded-xl bg-surface-container-lowest border border-outline-variant/30 space-y-2">
+                    <span className="material-symbols-outlined text-[24px] text-on-surface-variant block">
+                      inventory_2
+                    </span>
+                    <span>[NO ENTITIES RECORDED]</span>
+                    <p className="text-[11px] font-sans text-on-surface-variant">
+                      Ingest incident records to track persons, locations, vehicles, and key evidence items.
+                    </p>
+                  </div>
+                ) : (
+                  entities.map((ent) => (
+                    <div
+                      key={ent.id}
+                      className="p-3.5 rounded-xl bg-surface-container-lowest border border-outline-variant/40 shadow-xs space-y-2"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="font-headline font-bold text-xs text-primary truncate">
+                            {ent.name}
+                          </span>
+                          <span className="font-mono text-[9px] px-1.5 py-0.2 rounded bg-surface-container text-on-surface-variant uppercase shrink-0">
+                            {ent.type} / {ent.role}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => openEntityEditor(ent)}
+                          className="font-mono text-[10px] font-bold text-primary hover:underline flex items-center gap-0.5 cursor-pointer"
+                        >
+                          <span className="material-symbols-outlined text-[12px]">edit</span>
+                          <span>EDIT</span>
+                        </button>
+                      </div>
+
+                      {ent.aliases && ent.aliases.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-1 text-[10px] font-mono text-on-surface-variant">
+                          <span className="text-[9px] text-outline">AKA:</span>
+                          {ent.aliases.map((a, aIdx) => (
+                            <span
+                              key={aIdx}
+                              className="px-1.5 py-0.2 rounded bg-surface-container-low border border-outline-variant/20 text-on-surface"
+                            >
+                              {a}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {ent.type === "person" && (
+                        <div className="flex items-center justify-between text-[10px] font-mono pt-1 border-t border-outline-variant/20">
+                          <span className="text-on-surface-variant uppercase">ALIBI STATUS:</span>
+                          <span className={`px-2 py-0.5 rounded text-[9px] uppercase border ${getAlibiBadge(ent.alibiStatus || "unknown")}`}>
+                            [{ent.alibiStatus || "unknown"}]
+                          </span>
+                        </div>
+                      )}
+
+                      {ent.alibiDetails && (
+                        <p className="text-[11px] font-sans text-on-surface-variant bg-surface-container-low p-2 rounded-lg border border-outline-variant/20 leading-snug">
+                          {ent.alibiDetails}
+                        </p>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* ─── TAB 4: Evidentiary Gaps & Discrepancies ─── */}
             {activeRightTab === "gaps" && (
               <div className="flex flex-col gap-2.5">
                 {gaps.length === 0 ? (
@@ -1318,421 +1409,34 @@ export default function CaseWorkspacePage() {
                           </button>
                         </div>
                       )}
-<<<<<<< HEAD
-
-                      {/* Evidentiary Discrepancy & Re-Ask Confirmation Box */}
-                      {m.confirmationPrompt && (
-                        <div className="p-3.5 bg-secondary-container/90 rounded-2xl border border-secondary text-xs text-on-secondary-container space-y-2.5 shadow-sm animate-fadeIn">
-                          <div className="flex items-center gap-2 font-bold text-primary font-label">
-                            <span className="material-symbols-outlined text-error text-[18px]">
-                              warning
-                            </span>
-                            <span>Evidentiary Discrepancy Detected — Confirmation Required</span>
-                          </div>
-                          <p className="font-sans leading-relaxed text-on-surface font-medium">
-                            {m.confirmationPrompt}
-                          </p>
-                          {m.discrepancies && m.discrepancies.length > 0 && (
-                            <div className="pt-1 flex flex-wrap gap-2">
-                              {m.discrepancies.map((d, dIdx) => (
-                                <button
-                                  key={`disc-btn-${dIdx}`}
-                                  type="button"
-                                  onClick={() => handleConfirmDiscrepancy(d)}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary hover:bg-primary-container text-on-primary font-label text-[11px] font-bold shadow-xs transition-colors cursor-pointer"
-                                >
-                                  <span className="material-symbols-outlined text-[14px]">check</span>
-                                  <span>
-                                    {d.field === "alibiStatus"
-                                      ? `Confirm: Update ${d.entityName}'s alibi to "${d.newValue}"`
-                                      : `Confirm: Replace "${d.existingValue}" with "${d.newValue}"`}
-                                  </span>
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Formatted Evidentiary Text with Clickable Citations */}
-                      <div className="text-sm text-on-surface leading-relaxed">
-                        <FormattedEvidentiaryText
-                          text={m.text}
-                          onSelectNote={(nId) => setSelectedNoteId(nId)}
-                        />
-                      </div>
-
-                      {/* Citations Footer */}
-                      {m.citations && m.citations.length > 0 && (
-                        <div className="pt-2 border-t border-outline-variant/20 flex flex-wrap items-center gap-1.5">
-                          <span className="font-label text-[10px] uppercase font-bold text-on-surface-variant tracking-wider mr-1">
-                            Source Provenance:
-                          </span>
-                          {m.citations.map((c) => (
-                            <button
-                              key={c.noteId}
-                              onClick={() => setSelectedNoteId(c.noteId)}
-                              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-surface-container-lowest hover:bg-surface-container text-on-surface font-label text-[11px] font-semibold border border-outline-variant/30 transition-colors shadow-xs cursor-pointer"
-                            >
-                              <span className="material-symbols-outlined text-[13px] text-secondary">
-                                description
-                              </span>
-                              <span>note #{c.noteId.slice(-6)}</span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-=======
->>>>>>> refs/remotes/origin/main
                     </div>
                   ))
                 )}
               </div>
-<<<<<<< HEAD
-            ))
-          )}
-
-          {submitting && (
-            <div className="flex items-center gap-2.5 p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30 text-xs text-on-surface-variant font-label">
-              <span className="material-symbols-outlined text-[18px] text-secondary animate-spin">
-                sync
-              </span>
-              <span>Routing intent and executing grounded memory pipeline...</span>
-            </div>
-          )}
-
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* RIGHT LIVE CONTEXT INSPECTOR (Timeline, Suspects & Gaps) */}
-        <aside className="w-full lg:w-96 flex flex-col gap-4 shrink-0">
-          {/* Header & Tabs */}
-          <div className="bg-surface-container-lowest rounded-2xl p-2 border border-outline-variant/30 shadow-subtle flex items-center justify-between">
-            <div className="flex items-center gap-1 w-full">
-              <button
-                onClick={() => setActiveRightTab("timeline")}
-                className={`flex-1 py-1.5 px-1.5 rounded-xl font-label text-[11px] font-bold transition-all ${
-                  activeRightTab === "timeline"
-                    ? "bg-primary text-on-primary shadow-xs"
-                    : "text-on-surface-variant hover:bg-surface-container"
-                }`}
-              >
-                Timeline ({events.length})
-              </button>
-              <button
-                onClick={() => setActiveRightTab("suspects")}
-                className={`flex-1 py-1.5 px-1.5 rounded-xl font-label text-[11px] font-bold transition-all ${
-                  activeRightTab === "suspects"
-                    ? "bg-primary text-on-primary shadow-xs"
-                    : "text-on-surface-variant hover:bg-surface-container"
-                }`}
-              >
-                Suspects ({suspects.length})
-              </button>
-              <button
-                onClick={() => setActiveRightTab("entities")}
-                className={`flex-1 py-1.5 px-1.5 rounded-xl font-label text-[11px] font-bold transition-all ${
-                  activeRightTab === "entities"
-                    ? "bg-primary text-on-primary shadow-xs"
-                    : "text-on-surface-variant hover:bg-surface-container"
-                }`}
-              >
-                Entities ({entities.length})
-              </button>
-              <button
-                onClick={() => setActiveRightTab("gaps")}
-                className={`flex-1 py-1.5 px-1.5 rounded-xl font-label text-[11px] font-bold transition-all ${
-                  activeRightTab === "gaps"
-                    ? "bg-primary text-on-primary shadow-xs"
-                    : "text-on-surface-variant hover:bg-surface-container"
-                }`}
-              >
-                Gaps ({gaps.length})
-              </button>
-            </div>
-          </div>
-
-          {/* TAB 1: Chronological Timeline */}
-          {activeRightTab === "timeline" && (
-            <div className="flex flex-col gap-3">
-              {events.length === 0 ? (
-                <div className="p-8 text-center text-xs text-on-surface-variant rounded-2xl bg-surface-container-lowest border border-outline-variant/30">
-                  No chronological events logged yet.
-                </div>
-              ) : (
-                events.map((ev, idx) => (
-                  <div
-                    key={ev.id}
-                    className="p-3.5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-subtle space-y-1.5 group hover:border-secondary transition-colors"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-label text-[11px] font-bold text-primary">
-                        {ev.whenText || "Unspecified time"}
-                      </span>
-                      {ev.where && (
-                        <span className="font-label text-[10px] px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-semibold">
-                          {ev.where}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-on-surface font-medium leading-snug">
-                      {ev.what}
-                    </p>
-                    <div className="flex items-center justify-between pt-1 border-t border-outline-variant/20">
-                      <div className="flex flex-wrap gap-1">
-                        {ev.who?.map((w) => (
-                          <span
-                            key={w}
-                            className="font-label text-[10px] px-1.5 py-0.2 rounded bg-surface-container text-on-surface-variant"
-                          >
-                            @{w}
-                          </span>
-                        ))}
-                      </div>
-                      <button
-                        onClick={() => setSelectedNoteId(ev.noteId)}
-                        className="font-label text-[10px] text-secondary font-bold hover:underline cursor-pointer"
-                      >
-                        [note #{ev.noteId.slice(-6)}]
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-
-          {/* TAB 2: Ranked Suspects (Deterministic Formula) */}
-          {activeRightTab === "suspects" && (
-            <div className="flex flex-col gap-3">
-              {suspects.length === 0 ? (
-                <div className="p-8 text-center text-xs text-on-surface-variant rounded-2xl bg-surface-container-lowest border border-outline-variant/30">
-                  No suspects evaluated yet. Ingest case facts to trigger scoring.
-                </div>
-              ) : (
-                suspects.map((s, idx) => (
-                  <div
-                    key={s.name}
-                    className="p-3.5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-subtle space-y-2.5"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-headline font-bold text-xs text-primary">
-                          #{idx + 1} {s.name}
-                        </span>
-                        <span className="font-label text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">
-                          {s.role}
-                        </span>
-                      </div>
-                      <span className="font-label text-xs font-extrabold text-primary px-2 py-0.5 rounded-full bg-secondary-fixed">
-                        Score: {s.totalScore}
-                      </span>
-                    </div>
-
-                    {/* Alibi Status Badge & Edit Action */}
-                    <div className="flex items-center justify-between font-label text-[11px]">
-                      <div className="flex items-center gap-2">
-                        <span className="text-on-surface-variant">Alibi Status:</span>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase ${getAlibiBadge(s.breakdown.alibi.status)}`}>
-                          {s.breakdown.alibi.status}
-                        </span>
-                      </div>
-                      {!isViewer && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const matchedEnt = entities.find(
-                              (e) =>
-                                e.name.toLowerCase() === s.name.toLowerCase() ||
-                                (e.aliases || []).some((a) => a.toLowerCase() === s.name.toLowerCase())
-                            );
-                            if (matchedEnt) {
-                              openEntityEditor(matchedEnt);
-                            }
-                          }}
-                          className="text-[10px] text-secondary hover:text-primary font-bold flex items-center gap-1 hover:underline cursor-pointer"
-                        >
-                          <span className="material-symbols-outlined text-[13px]">edit</span>
-                          <span>Update Alibi</span>
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Explainable Formula Breakdown (Direct from Snitch Inspector) */}
-                    <div className="p-2.5 rounded-xl bg-surface-container-low text-[10px] font-label text-on-surface-variant space-y-1">
-                      <div className="font-bold text-primary uppercase text-[9px]">
-                        Deterministic Evidentiary Breakdown:
-                      </div>
-                      <div className="flex justify-between">
-                        <span>• Events Linked (+2/ea):</span>
-                        <span className="text-on-surface font-semibold">{s.breakdown.linkedEvents.description}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>• Scene Proximity (+3):</span>
-                        <span className="text-on-surface font-semibold">{s.breakdown.proximity.description}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>• Motive / Conflict (+2):</span>
-                        <span className="text-on-surface font-semibold">{s.breakdown.motiveOrIncrimination.description}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>• Alibi Verified/Broken:</span>
-                        <span className="text-on-surface font-semibold">{s.breakdown.alibi.description}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-
-          {/* TAB 3: All Tracked Entities */}
-          {activeRightTab === "entities" && (
-            <div className="flex flex-col gap-3">
-              {entities.length === 0 ? (
-                <div className="p-8 text-center text-xs text-on-surface-variant rounded-2xl bg-surface-container-lowest border border-outline-variant/30">
-                  No entities extracted or tracked yet. Ingest facts to populate.
-                </div>
-              ) : (
-                entities.map((ent) => (
-                  <div
-                    key={ent.id}
-                    className="p-3.5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-subtle space-y-2 hover:border-secondary/40 transition-colors"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="font-headline font-bold text-xs text-primary">
-                          {ent.name}
-                        </span>
-                        <span className="font-label text-[10px] px-1.5 py-0.2 rounded bg-surface-container text-on-surface-variant uppercase font-medium">
-                          {ent.type}
-                        </span>
-                        <span className="font-label text-[10px] px-1.5 py-0.2 rounded bg-secondary-container text-on-secondary-container font-semibold">
-                          {ent.role}
-                        </span>
-                      </div>
-                      {!isViewer && (
-                        <button
-                          type="button"
-                          onClick={() => openEntityEditor(ent)}
-                          className="p-1 rounded-lg hover:bg-surface-container text-secondary transition-colors cursor-pointer"
-                          title="Edit entity name, role, or alibi"
-                        >
-                          <span className="material-symbols-outlined text-[16px]">edit</span>
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Alibi display for persons */}
-                    {ent.type === "person" && (
-                      <div className="flex items-center gap-2 font-label text-[11px] pt-0.5">
-                        <span className="text-on-surface-variant">Alibi Status:</span>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase ${getAlibiBadge(ent.alibiStatus)}`}>
-                          {ent.alibiStatus}
-                        </span>
-                        {ent.alibiDetails && (
-                          <span className="text-[10px] text-on-surface-variant truncate max-w-[160px]" title={ent.alibiDetails}>
-                            {ent.alibiDetails}
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Aliases display */}
-                    {ent.aliases && ent.aliases.length > 0 && (
-                      <div className="flex flex-wrap items-center gap-1 pt-1 border-t border-outline-variant/20">
-                        <span className="font-label text-[9px] text-on-surface-variant">Aliases:</span>
-                        {ent.aliases.map((a) => (
-                          <span
-                            key={a}
-                            className="font-label text-[9px] px-1.5 py-0.2 rounded bg-surface-container text-on-surface font-medium"
-                          >
-                            {a}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-
-          {/* TAB 4: Gaps & Open Questions */}
-          {activeRightTab === "gaps" && (
-            <div className="flex flex-col gap-3">
-              {gaps.length === 0 ? (
-                <div className="p-8 text-center text-xs text-on-surface-variant rounded-2xl bg-surface-container-lowest border border-outline-variant/30">
-                  No evidentiary gaps or contradictions detected.
-                </div>
-              ) : (
-                gaps.map((g, idx) => (
-                  <div
-                    key={`gap-${idx}`}
-                    className="p-3.5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-subtle space-y-1 text-xs"
-                  >
-                    <div className="flex items-center gap-1.5 text-secondary font-label text-[10px] uppercase font-bold">
-                      <span className="material-symbols-outlined text-[15px]">warning</span>
-                      <span>{g.type.replace(/_/g, " ")}</span>
-                    </div>
-                    <p className="text-on-surface font-medium leading-snug">{g.description}</p>
-                    {g.noteId && (
-                      <button
-                        onClick={() => setSelectedNoteId(g.noteId!)}
-                        className="font-label text-[10px] text-secondary font-bold hover:underline cursor-pointer block pt-0.5"
-                      >
-                        [inspect note #{g.noteId.slice(-6)}]
-                      </button>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-        </aside>
-=======
             )}
           </div>
         </section>
->>>>>>> refs/remotes/origin/main
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          3. VERBATIM NOTE DRAWER & TOAST NOTIFICATIONS
+          3. ENTITY & ALIBI QUICK EDITOR MODAL
       ────────────────────────────────────────────────────────────── */}
-      <NoteDrawer
-        noteId={selectedNoteId}
-        notes={notes}
-        events={events}
-        onClose={() => setSelectedNoteId(null)}
-      />
-
-<<<<<<< HEAD
-      {/* Toast Notification Container */}
-      <ToastContainer toasts={toasts} onDismiss={(id) => setToasts((prev) => prev.filter((t) => t.id !== id))} />
-
-      {/* Quick Entity & Alibi Editor Modal */}
       {editingEntity && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-          <div className="w-full max-w-md bg-surface-container-lowest border border-outline-variant/30 rounded-3xl p-6 shadow-float space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-scrim/60 backdrop-blur-xs animate-fadeIn">
+          <div className="w-full max-w-md bg-surface-container-lowest rounded-2xl border border-outline-variant/40 shadow-xl p-5 space-y-4">
             <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-secondary-container flex items-center justify-center text-on-secondary-container">
-                  <span className="material-symbols-outlined text-[20px]">manage_accounts</span>
-                </div>
-                <div>
-                  <h3 className="font-headline font-bold text-sm text-primary">
-                    Update Entity & Alibi Record
-                  </h3>
-                  <p className="font-sans text-[11px] text-on-surface-variant">
-                    Modify alibi status, fix name typos, or edit aliases
-                  </p>
-                </div>
+                <span className="material-symbols-outlined text-primary text-[20px]">
+                  badge
+                </span>
+                <h3 className="font-headline font-bold text-sm text-primary">
+                  Update Person of Interest / Entity Record
+                </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setEditingEntity(null)}
-                className="p-1 rounded-full hover:bg-surface-container text-on-surface-variant transition-colors cursor-pointer"
+                className="p-1 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors"
               >
                 <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
@@ -1740,7 +1444,7 @@ export default function CaseWorkspacePage() {
 
             <form onSubmit={handleSaveEntity} className="space-y-3.5">
               <div className="space-y-1">
-                <label className="font-label text-xs font-bold text-on-surface">Entity Name (Correct Typos)</label>
+                <label className="font-mono text-xs font-bold text-on-surface">Entity Name (Correct Typos)</label>
                 <input
                   type="text"
                   value={editName}
@@ -1753,11 +1457,11 @@ export default function CaseWorkspacePage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="font-label text-xs font-bold text-on-surface">Role</label>
+                  <label className="font-mono text-xs font-bold text-on-surface">Role</label>
                   <select
                     value={editRole}
                     onChange={(e) => setEditRole(e.target.value)}
-                    className="w-full bg-surface-container-low border border-outline-variant/40 rounded-xl px-2.5 py-2 text-xs text-on-surface focus:outline-none focus:border-primary font-label"
+                    className="w-full bg-surface-container-low border border-outline-variant/40 rounded-xl px-2.5 py-2 text-xs text-on-surface focus:outline-none focus:border-primary font-mono"
                   >
                     <option value="suspect">Suspect</option>
                     <option value="witness">Witness</option>
@@ -1767,11 +1471,11 @@ export default function CaseWorkspacePage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-label text-xs font-bold text-on-surface">Alibi Status</label>
+                  <label className="font-mono text-xs font-bold text-on-surface">Alibi Status</label>
                   <select
                     value={editAlibiStatus}
                     onChange={(e) => setEditAlibiStatus(e.target.value)}
-                    className="w-full bg-surface-container-low border border-outline-variant/40 rounded-xl px-2.5 py-2 text-xs text-on-surface focus:outline-none focus:border-primary font-label font-bold"
+                    className="w-full bg-surface-container-low border border-outline-variant/40 rounded-xl px-2.5 py-2 text-xs text-on-surface focus:outline-none focus:border-primary font-mono font-bold"
                   >
                     <option value="unknown">Unknown</option>
                     <option value="claimed">Claimed (Unverified)</option>
@@ -1782,7 +1486,7 @@ export default function CaseWorkspacePage() {
               </div>
 
               <div className="space-y-1">
-                <label className="font-label text-xs font-bold text-on-surface">Alibi Details / Evidence Discrepancy</label>
+                <label className="font-mono text-xs font-bold text-on-surface">Alibi Details / Evidence Discrepancy</label>
                 <textarea
                   rows={2}
                   value={editAlibiDetails}
@@ -1793,7 +1497,7 @@ export default function CaseWorkspacePage() {
               </div>
 
               <div className="space-y-1">
-                <label className="font-label text-xs font-bold text-on-surface">Aliases & Monikers (comma separated)</label>
+                <label className="font-mono text-xs font-bold text-on-surface">Aliases & Monikers (comma separated)</label>
                 <input
                   type="text"
                   value={editAliases}
@@ -1807,14 +1511,14 @@ export default function CaseWorkspacePage() {
                 <button
                   type="button"
                   onClick={() => setEditingEntity(null)}
-                  className="px-4 py-2 font-label text-xs text-on-surface-variant hover:text-on-surface font-semibold"
+                  className="px-4 py-2 font-mono text-xs text-on-surface-variant hover:text-on-surface font-semibold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={savingEntity}
-                  className="px-5 py-2 rounded-full bg-primary hover:bg-primary-container text-on-primary font-label text-xs font-bold disabled:opacity-50 shadow-sm cursor-pointer"
+                  className="px-5 py-2 rounded-full bg-primary hover:bg-primary-container text-on-primary font-mono text-xs font-bold disabled:opacity-50 shadow-sm cursor-pointer"
                 >
                   {savingEntity ? "Saving..." : "Save to Database"}
                 </button>
@@ -1823,12 +1527,21 @@ export default function CaseWorkspacePage() {
           </div>
         </div>
       )}
-=======
+
+      {/* ─────────────────────────────────────────────────────────────
+          4. VERBATIM NOTE DRAWER & TOAST NOTIFICATIONS
+      ────────────────────────────────────────────────────────────── */}
+      <NoteDrawer
+        noteId={selectedNoteId}
+        notes={notes}
+        events={events}
+        onClose={() => setSelectedNoteId(null)}
+      />
+
       <ToastContainer
         toasts={toasts}
         onDismiss={(id) => setToasts((prev) => prev.filter((t) => t.id !== id))}
       />
->>>>>>> refs/remotes/origin/main
     </div>
   );
 }
