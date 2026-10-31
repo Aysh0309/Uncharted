@@ -3,11 +3,11 @@
  * Supports Google Gemini API (default) and OpenAI-compatible endpoints.
  */
 
-export const DEFAULT_EMBEDDING_DIMENSION = 768; // Gemini text-embedding-004
+export const DEFAULT_EMBEDDING_DIMENSION = 768; // Gemini gemini-embedding-001 (768 dimensions via outputDimensionality)
 
 /**
  * Returns the configured vector embedding dimensions.
- * Defaults to 768 (Gemini text-embedding-004). Set EMBEDDING_DIMENSIONS in .env if using OpenAI (1536).
+ * Defaults to 768 (Gemini gemini-embedding-001). Set EMBEDDING_DIMENSIONS in .env if using OpenAI (1536).
  */
 export function getEmbeddingDimension(): number {
   if (process.env.EMBEDDING_DIMENSIONS) {
@@ -22,8 +22,31 @@ export function getEmbeddingDimension(): number {
 }
 
 /**
+ * Helper to fetch with retry for transient rate limits (429) or high demand spikes (503).
+ */
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  retries = 2,
+  backoffMs = 800
+): Promise<Response> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const res = await fetch(url, options);
+    if (res.ok || (res.status !== 429 && res.status !== 503)) {
+      return res;
+    }
+    if (attempt < retries) {
+      await new Promise((resolve) => setTimeout(resolve, backoffMs * (attempt + 1)));
+    } else {
+      return res;
+    }
+  }
+  return fetch(url, options);
+}
+
+/**
  * Generates an embedding vector for the provided text.
- * Default: Google Gemini `text-embedding-004` (768 dimensions).
+ * Default: Google Gemini `gemini-embedding-001` (768 dimensions).
  */
 export async function embed(text: string): Promise<number[]> {
   const apiKey = process.env.LLM_API_KEY;
@@ -37,7 +60,7 @@ export async function embed(text: string): Promise<number[]> {
 
   if (provider === "openai") {
     const model = process.env.EMBEDDING_MODEL || "text-embedding-3-small";
-    const res = await fetch("https://api.openai.com/v1/embeddings", {
+    const res = await fetchWithRetry("https://api.openai.com/v1/embeddings", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -59,18 +82,24 @@ export async function embed(text: string): Promise<number[]> {
   }
 
   // Default: Gemini API
-  const model = process.env.EMBEDDING_MODEL || "text-embedding-004";
+  let model = process.env.EMBEDDING_MODEL || "gemini-embedding-001";
+  if (model === "text-embedding-004") {
+    model = "gemini-embedding-001";
+  }
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:embedContent?key=${apiKey}`;
 
-  const response = await fetch(url, {
+  const requestBody: Record<string, unknown> = {
+    model: `models/${model}`,
+    content: {
+      parts: [{ text }],
+    },
+    outputDimensionality: getEmbeddingDimension(),
+  };
+
+  const response = await fetchWithRetry(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: `models/${model}`,
-      content: {
-        parts: [{ text }],
-      },
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {
@@ -111,7 +140,7 @@ export async function callLLM(
     }
     messages.push({ role: "user", content: prompt });
 
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    const res = await fetchWithRetry("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -136,10 +165,12 @@ export async function callLLM(
 
   // Default: Gemini API (resolves 'latest' to latest Gemini Flash)
   let model = process.env.LLM_MODEL || "latest";
-  if (model.toLowerCase() === "latest") {
-    model = "gemini-2.0-flash";
+  if (model.toLowerCase() === "latest" || model === "gemini-2.0-flash") {
+    model = "gemini-3.8-flash";
   }
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const fallbackModel = "gemini-2.5-flash";
+
+  let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
   const requestBody: Record<string, unknown> = {
     contents: [
@@ -160,11 +191,22 @@ export async function callLLM(
     };
   }
 
-  const response = await fetch(url, {
+  let response = await fetchWithRetry(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(requestBody),
   });
+
+  // If 503 unavailable on primary model, attempt graceful fallback to secondary model
+  if (response.status === 503 && model !== fallbackModel) {
+    console.warn(`Primary model ${model} returned 503 (high demand). Retrying with ${fallbackModel}...`);
+    url = `https://generativelanguage.googleapis.com/v1beta/models/${fallbackModel}:generateContent?key=${apiKey}`;
+    response = await fetchWithRetry(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(requestBody),
+    });
+  }
 
   if (!response.ok) {
     const errorText = await response.text();

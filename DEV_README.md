@@ -11,11 +11,11 @@
 |---|---|---|
 | **Framework** | Next.js 14 (App Router) | Unified TypeScript React frontend & Node.js API routes |
 | **Database** | MongoDB Atlas (Official Driver) | Multi-collection document store |
-| **Vector Search** | Atlas Vector Search | Cosine similarity on 768-dim embeddings (`text-embedding-004`) |
+| **Vector Search** | Atlas Vector Search | Cosine similarity on 768-dim embeddings (`gemini-embedding-001`) |
 | **Authentication** | JWT in `httpOnly` cookies | Stateless session tokens signed with HS256 |
 | **Security / Hash** | `bcryptjs` | Password hashing with 10 salt rounds |
 | **Validation** | `zod` | Runtime schema validation for API payloads & LLM outputs |
-| **LLM & Embeddings** | Google Gemini API (or OpenAI) | Latest Gemini Flash for extraction & answering, `text-embedding-004` for vectors |
+| **LLM & Embeddings** | Google Gemini API (or OpenAI) | Gemini 3.8 Flash for extraction & answering, `gemini-embedding-001` (768-dim) for vectors |
 | **Styling** | Tailwind CSS + Lucide Icons | Dark-themed, responsive investigative terminal |
 | **Deployment Target** | Vercel | Zero-config serverless deployment |
 
@@ -50,9 +50,9 @@ LLM_API_KEY=your_gemini_api_key_here
 
 # LLM Provider Configuration
 LLM_PROVIDER=gemini
-EMBEDDING_MODEL=text-embedding-004
+EMBEDDING_MODEL=gemini-embedding-001
 EMBEDDING_DIMENSIONS=768
-LLM_MODEL=latest
+LLM_MODEL=gemini-3.8-flash
 ```
 
 > **Note on OpenAI**: If using OpenAI, set `LLM_PROVIDER=openai`, `EMBEDDING_MODEL=text-embedding-3-small`, and `EMBEDDING_DIMENSIONS=1536`.

@@ -1,110 +1,111 @@
 import Link from "next/link";
-import { Shield, Brain, Database, Sparkles, Activity } from "lucide-react";
 
 export default function Home() {
   return (
-    <main className="min-h-screen px-4 py-12 max-w-5xl mx-auto flex flex-col justify-between">
-      <header className="flex items-center justify-between border-b border-zinc-800 pb-6 mb-12">
+    <main className="min-h-screen bg-surface text-on-surface px-4 lg:px-8 py-10 max-w-5xl mx-auto flex flex-col justify-between">
+      {/* Header */}
+      <header className="flex items-center justify-between pb-6 border-b border-outline-variant/30">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-            <Shield className="w-5 h-5" />
+          <div className="w-10 h-10 rounded-2xl bg-primary text-on-primary flex items-center justify-center font-bold text-base shadow-sm">
+            <span className="material-symbols-outlined text-[20px]">policy</span>
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+            <h1 className="font-headline font-bold text-lg text-primary tracking-tight flex items-center gap-2">
               CaseMemory
-              <span className="text-xs font-mono font-normal px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                v0.1.0-alpha
+              <span className="font-label text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed">
+                UNCHARTED 2026
               </span>
             </h1>
-            <p className="text-xs text-zinc-400">Agentic Memory for Criminal Case Investigations</p>
+            <p className="font-sans text-xs text-on-surface-variant">
+              Agentic Memory for Criminal Investigations
+            </p>
           </div>
         </div>
 
         <Link
           href="/api/health"
           target="_blank"
-          className="inline-flex items-center gap-2 text-xs font-mono px-3 py-1.5 rounded-md bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white transition"
+          className="inline-flex items-center gap-1.5 font-label text-xs font-semibold px-3 py-1.5 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-colors border border-outline-variant/20"
         >
-          <Activity className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-          GET /api/health
+          <span className="w-2 h-2 rounded-full bg-secondary" />
+          <span>GET /api/health</span>
         </Link>
       </header>
 
-      <section className="space-y-6 my-auto py-8">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900/80 border border-zinc-800 text-xs text-zinc-400">
-          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-          UNCHARTED 2026 | Agentic Memory Track
+      {/* Hero Section */}
+      <section className="space-y-6 my-auto py-12">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container border border-outline-variant/30 font-label text-xs text-on-surface-variant font-medium">
+          <span className="w-2 h-2 rounded-full bg-secondary" />
+          Continuous Vector Synthesis & Evidentiary Memory
         </div>
-        
-        <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
+
+        <h2 className="font-headline text-4xl sm:text-5xl font-extrabold text-primary tracking-tight leading-tight max-w-2xl">
           Investigative facts in, <br />
-          <span className="bg-gradient-to-r from-amber-400 via-orange-300 to-amber-500 bg-clip-text text-transparent">
+          <span className="text-secondary">
             grounded evidentiary intelligence
           </span> out.
         </h2>
 
-        <p className="text-base sm:text-lg text-zinc-400 max-w-2xl leading-relaxed">
-          CaseMemory extracts unstructured investigator inputs into structured events, entities, and timelines.
-          Every answer is strictly grounded in case memory with verified note citations.
+        <p className="font-sans text-sm sm:text-base text-on-surface-variant max-w-xl leading-relaxed">
+          CaseMemory ingests raw investigator notes into structured vector memory,
+          detects contradictions, computes explainable suspect scores, and answers questions with verified citations.
         </p>
 
-        <div className="pt-2 flex items-center gap-3">
+        <div className="pt-2 flex flex-wrap items-center gap-3">
           <Link
             href="/cases"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold text-sm tracking-wide transition shadow-lg shadow-amber-500/10"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary hover:bg-primary-container text-on-primary font-label text-xs font-bold transition-all shadow-sm cursor-pointer"
           >
-            Launch Case Terminal
+            <span>Launch Case Workspace</span>
+            <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
           </Link>
           <Link
             href="/login"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-sm font-medium transition"
+            className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface font-label text-xs font-bold transition-colors border border-outline-variant/30"
           >
-            Sign In / Demo Roles
+            <span>Demo Roles Login</span>
           </Link>
         </div>
 
+        {/* 3 Core Minimalist Highlights */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6">
-          <div className="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800/80">
-            <div className="flex items-center gap-2 text-amber-400 mb-2">
-              <Brain className="w-4 h-4" />
-              <h3 className="text-sm font-semibold text-white">Dual-Pipeline Router</h3>
+          <div className="p-4 rounded-3xl bg-surface-container-low border border-outline-variant/30 space-y-1.5 shadow-subtle">
+            <div className="flex items-center gap-2 text-primary font-bold font-label text-xs">
+              <span className="material-symbols-outlined text-[18px] text-secondary">alt_route</span>
+              Dual-Pipeline Router
             </div>
-            <p className="text-xs text-zinc-400 leading-normal">
-              Automatically distinguishes case facts from investigative queries in a unified input console.
+            <p className="font-sans text-xs text-on-surface-variant leading-relaxed">
+              Separates unstructured case facts from investigative queries in one unified console.
             </p>
           </div>
 
-          <div className="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800/80">
-            <div className="flex items-center gap-2 text-amber-400 mb-2">
-              <Database className="w-4 h-4" />
-              <h3 className="text-sm font-semibold text-white">Atlas Vector Search</h3>
+          <div className="p-4 rounded-3xl bg-surface-container-low border border-outline-variant/30 space-y-1.5 shadow-subtle">
+            <div className="flex items-center gap-2 text-primary font-bold font-label text-xs">
+              <span className="material-symbols-outlined text-[18px] text-secondary">database</span>
+              Atlas Vector Search
             </div>
-            <p className="text-xs text-zinc-400 leading-normal">
-              Combines semantic similarity on notes and events with strict case-isolated scoping and RBAC.
+            <p className="font-sans text-xs text-on-surface-variant leading-relaxed">
+              Strict multi-tenant case filtering combined with cosine vector similarity on notes & events.
             </p>
           </div>
 
-          <div className="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800/80">
-            <div className="flex items-center gap-2 text-amber-400 mb-2">
-              <Shield className="w-4 h-4" />
-              <h3 className="text-sm font-semibold text-white">Explainable Evidentiary Output</h3>
+          <div className="p-4 rounded-3xl bg-surface-container-low border border-outline-variant/30 space-y-1.5 shadow-subtle">
+            <div className="flex items-center gap-2 text-primary font-bold font-label text-xs">
+              <span className="material-symbols-outlined text-[18px] text-secondary">verified</span>
+              Explainable Evidentiary Output
             </div>
-            <p className="text-xs text-zinc-400 leading-normal">
-              Calculates deterministic suspect scores and gap analysis while never declaring premature guilt.
+            <p className="font-sans text-xs text-on-surface-variant leading-relaxed">
+              Deterministic suspect scores in code and mandatory source citations. No hallucinations.
             </p>
           </div>
         </div>
       </section>
 
-      <footer className="pt-12 border-t border-zinc-900 text-xs text-zinc-500 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div>
-          Stack: Next.js (App Router) • MongoDB Atlas • JWT RBAC • Tailwind CSS
-        </div>
-        <div className="font-mono text-zinc-500">
-          Ready for Vercel deployment
-        </div>
+      {/* Footer */}
+      <footer className="pt-8 border-t border-outline-variant/30 font-label text-xs text-on-surface-variant flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>Next.js 14 • MongoDB Atlas • Google Gemini • Material Editorial Theme</div>
+        <div className="text-outline">Clean &amp; Minimalist</div>
       </footer>
     </main>
   );
 }
-

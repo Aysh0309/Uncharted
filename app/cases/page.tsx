@@ -2,17 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import {
-  FolderLock,
-  Plus,
-  Users,
-  Calendar,
-  ChevronRight,
-  ShieldAlert,
-  UserPlus,
-  X,
-  FileText,
-} from "lucide-react";
 import { UserSession } from "@/lib/auth";
 
 interface CaseItem {
@@ -53,19 +42,16 @@ export default function CasesPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      // Fetch user session
       const meRes = await fetch("/api/auth/me");
       if (!meRes.ok) throw new Error("Authentication required");
       const meData = await meRes.json();
       setUser(meData.user);
 
-      // Fetch accessible cases
       const casesRes = await fetch("/api/cases");
       const casesData = await casesRes.json();
       if (!casesRes.ok) throw new Error(casesData.message || "Failed to load cases");
       setCases(casesData.cases || []);
 
-      // If admin, fetch all users for assignment
       if (meData.user.role === "admin") {
         const usersRes = await fetch("/api/admin/users");
         if (usersRes.ok) {
@@ -140,55 +126,63 @@ export default function CasesPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header section */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-            <FolderLock className="w-5 h-5 text-amber-400" />
-            Active Investigation Files
+    <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 py-8 space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 border-b border-outline-variant/30">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <span className="font-label text-xs uppercase tracking-widest text-secondary font-semibold">
+              Case Memory Directory • {cases.length} Files
+            </span>
+            <span className="w-1.5 h-1.5 rounded-full bg-secondary" />
+            <span className="font-label text-xs text-on-surface-variant font-medium">
+              Multi-tenant RBAC Scoped
+            </span>
+          </div>
+          <h1 className="font-headline font-bold text-2xl text-primary tracking-tight">
+            Active Case Directory
           </h1>
-          <p className="text-xs text-zinc-400 mt-0.5">
+          <p className="font-sans text-xs text-on-surface-variant max-w-xl">
             {user?.role === "admin"
-              ? "Administrator Directory: You have root visibility over all system case files."
+              ? "Administrator root directory: Full visibility across all forensic case threads."
               : user?.role === "investigator"
-              ? "Investigator Terminal: Access to your assigned case files (Read/Write enabled)."
-              : "Viewer Terminal: Access to your assigned case files (Read-only access)."}
+              ? "Investigator terminal: Access to assigned active threads with write privileges."
+              : "Viewer terminal: Read-only access to assigned active threads."}
           </p>
         </div>
 
         {user && user.role !== "viewer" && (
           <button
             onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold text-xs tracking-wide transition shadow-sm"
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-primary hover:bg-primary-container text-on-primary font-label text-xs font-semibold transition-all shadow-sm cursor-pointer shrink-0"
           >
-            <Plus className="w-4 h-4" />
-            New Case File
+            <span className="material-symbols-outlined text-[17px]">add</span>
+            <span>Open New Case</span>
           </button>
         )}
       </div>
 
       {error && (
-        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
-          <ShieldAlert className="w-4 h-4 shrink-0" />
+        <div className="p-4 rounded-2xl bg-error-container text-on-error-container text-xs flex items-center gap-2">
+          <span className="material-symbols-outlined text-[18px]">error</span>
           <span>{error}</span>
         </div>
       )}
 
       {loading ? (
-        <div className="text-center py-12 text-zinc-500 text-xs">
-          Loading authorized investigation files...
+        <div className="text-center py-20 text-on-surface-variant text-xs font-label">
+          Loading assigned case files...
         </div>
       ) : cases.length === 0 ? (
-        <div className="text-center py-16 p-8 border border-dashed border-zinc-800 rounded-2xl bg-zinc-900/20 space-y-3">
-          <div className="h-10 w-10 mx-auto rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400">
-            <FolderLock className="w-5 h-5" />
+        <div className="text-center py-20 p-8 border border-dashed border-outline-variant/40 rounded-3xl bg-surface-container-low space-y-2">
+          <div className="w-10 h-10 mx-auto rounded-2xl bg-surface-container flex items-center justify-center text-primary">
+            <span className="material-symbols-outlined text-[20px]">folder_off</span>
           </div>
-          <h3 className="text-sm font-medium text-white">No Assigned Cases Found</h3>
-          <p className="text-xs text-zinc-400 max-w-sm mx-auto">
+          <h3 className="font-headline font-bold text-sm text-primary">No Assigned Cases Found</h3>
+          <p className="font-sans text-xs text-on-surface-variant max-w-sm mx-auto">
             {user?.role === "admin"
-              ? "No cases exist yet. Click 'New Case File' to start an investigation."
-              : "You are not assigned to any case files yet. Contact an administrator to be assigned."}
+              ? "No cases exist yet. Click 'Open New Case' to initialize the first case."
+              : "You are not assigned to any cases. Contact an administrator to be assigned."}
           </p>
         </div>
       ) : (
@@ -196,38 +190,43 @@ export default function CasesPage() {
           {cases.map((c) => (
             <div
               key={c.id}
-              className="p-5 rounded-xl bg-zinc-900/40 border border-zinc-800/80 hover:border-zinc-700/80 transition flex flex-col justify-between space-y-4 group"
+              className="p-5 rounded-3xl bg-surface-container-lowest border border-outline-variant/30 shadow-subtle hover:shadow-card transition-all flex flex-col justify-between space-y-4 group"
             >
               <div className="space-y-2">
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="text-base font-semibold text-white group-hover:text-amber-400 transition">
+                  <h3 className="font-headline font-bold text-base text-primary group-hover:text-secondary transition-colors">
                     {c.title}
                   </h3>
-                  <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded border bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+                  <span className="font-label text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant">
                     {c.status}
                   </span>
                 </div>
-                <p className="text-xs text-zinc-400 line-clamp-2">
+
+                <p className="font-sans text-xs text-on-surface-variant line-clamp-2">
                   {c.description || "No description provided."}
                 </p>
+
                 {c.summary && (
-                  <div className="p-2.5 rounded-lg bg-zinc-950/70 border border-zinc-800/60 text-[11px] text-zinc-300">
-                    <span className="text-amber-400 font-semibold block mb-0.5">
-                      Working Memory Summary:
+                  <div className="p-3 rounded-2xl bg-surface-container-low text-xs text-on-surface-variant space-y-1">
+                    <span className="font-label text-[10px] font-bold uppercase tracking-wider text-primary flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[13px] text-secondary">psychology</span>
+                      Working Memory
                     </span>
-                    <span className="line-clamp-2 italic">{c.summary}</span>
+                    <p className="italic line-clamp-2 text-[11px] leading-relaxed">
+                      "{c.summary}"
+                    </p>
                   </div>
                 )}
               </div>
 
-              <div className="pt-2 border-t border-zinc-800/60 flex items-center justify-between text-xs text-zinc-400">
+              <div className="pt-3 border-t border-outline-variant/20 flex items-center justify-between text-xs font-label text-on-surface-variant">
                 <div className="flex items-center gap-3 text-[11px]">
-                  <span className="flex items-center gap-1 font-mono">
-                    <Users className="w-3.5 h-3.5 text-zinc-400" />
+                  <span className="flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px]">group</span>
                     {c.memberIds?.length || 1} assigned
                   </span>
-                  <span className="flex items-center gap-1 font-mono">
-                    <Calendar className="w-3.5 h-3.5 text-zinc-400" />
+                  <span className="flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px]">schedule</span>
                     {new Date(c.createdAt).toLocaleDateString()}
                   </span>
                 </div>
@@ -237,18 +236,18 @@ export default function CasesPage() {
                     <button
                       onClick={() => setShowAssignModal(c)}
                       title="Assign member to case"
-                      className="p-1.5 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition"
+                      className="p-1.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface transition-colors cursor-pointer"
                     >
-                      <UserPlus className="w-3.5 h-3.5" />
+                      <span className="material-symbols-outlined text-[16px]">person_add</span>
                     </button>
                   )}
 
                   <Link
                     href={`/cases/${c.id}`}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium transition"
+                    className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-full bg-primary hover:bg-primary-container text-on-primary text-xs font-bold transition-all shadow-xs"
                   >
                     <span>Inspect</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
+                    <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
                   </Link>
                 </div>
               </div>
@@ -259,42 +258,42 @@ export default function CasesPage() {
 
       {/* Create Case Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-lg p-6 space-y-4 shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-primary/20 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-surface-container-low border border-outline-variant/30 rounded-3xl w-full max-w-lg p-6 space-y-4 shadow-float animate-slideUp">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <FileText className="w-4 h-4 text-amber-400" />
+              <h3 className="font-headline font-bold text-base text-primary flex items-center gap-2">
+                <span className="material-symbols-outlined text-secondary text-[20px]">create_new_folder</span>
                 Open New Case File
               </h3>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-zinc-400 hover:text-white"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors"
               >
-                <X className="w-4 h-4" />
+                <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
             </div>
 
             <form onSubmit={handleCreateCase} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-zinc-300">Case Title</label>
+              <div className="space-y-1">
+                <label className="font-label text-xs font-bold text-on-surface">Case Title</label>
                 <input
                   type="text"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   placeholder="e.g. The Waterfront Warehouse Incident"
                   required
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500/50"
+                  className="w-full bg-surface-container-lowest border border-outline-variant/40 rounded-xl px-3.5 py-2 text-xs text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary"
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-zinc-300">Description</label>
+              <div className="space-y-1">
+                <label className="font-label text-xs font-bold text-on-surface">Description</label>
                 <textarea
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
-                  placeholder="Brief synopsis of reported facts and jurisdiction..."
+                  placeholder="Synopsis of incident facts and initial jurisdiction..."
                   rows={3}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500/50"
+                  className="w-full bg-surface-container-lowest border border-outline-variant/40 rounded-xl px-3.5 py-2 text-xs text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary"
                 />
               </div>
 
@@ -302,16 +301,16 @@ export default function CasesPage() {
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-3 py-1.5 text-xs text-zinc-400 hover:text-white"
+                  className="px-4 py-2 font-label text-xs text-on-surface-variant hover:text-on-surface font-semibold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={creating}
-                  className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 text-xs font-semibold disabled:opacity-50"
+                  className="px-5 py-2 rounded-full bg-primary hover:bg-primary-container text-on-primary font-label text-xs font-bold disabled:opacity-50 shadow-sm"
                 >
-                  {creating ? "Creating..." : "Create Case"}
+                  {creating ? "Opening..." : "Create Case"}
                 </button>
               </div>
             </form>
@@ -319,41 +318,40 @@ export default function CasesPage() {
         </div>
       )}
 
-      {/* Admin Case Assign Modal */}
+      {/* Admin Assign Modal */}
       {showAssignModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-primary/20 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-surface-container-low border border-outline-variant/30 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-float animate-slideUp">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <UserPlus className="w-4 h-4 text-amber-400" />
-                Assign Member to Case
+              <h3 className="font-headline font-bold text-base text-primary flex items-center gap-2">
+                <span className="material-symbols-outlined text-secondary text-[20px]">person_add</span>
+                Assign Member
               </h3>
               <button
                 onClick={() => setShowAssignModal(null)}
-                className="text-zinc-400 hover:text-white"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors"
               >
-                <X className="w-4 h-4" />
+                <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
             </div>
 
-            <p className="text-xs text-zinc-400">
-              Assign an investigator or viewer to{" "}
-              <span className="text-white font-medium">"{showAssignModal.title}"</span>.
+            <p className="font-sans text-xs text-on-surface-variant">
+              Grant investigation access to <span className="font-bold text-primary">"{showAssignModal.title}"</span>.
             </p>
 
             <form onSubmit={handleAssignUser} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-zinc-300">Select User</label>
+              <div className="space-y-1">
+                <label className="font-label text-xs font-bold text-on-surface">Select User</label>
                 <select
                   value={selectedUserId}
                   onChange={(e) => setSelectedUserId(e.target.value)}
                   required
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500/50"
+                  className="w-full bg-surface-container-lowest border border-outline-variant/40 rounded-xl px-3.5 py-2 text-xs text-on-surface focus:outline-none focus:border-primary font-label"
                 >
                   <option value="">-- Choose User --</option>
                   {allUsers.map((u) => (
                     <option key={u.id} value={u.id}>
-                      {u.name} ({u.role}) - {u.email}
+                      {u.name} ({u.role}) — {u.email}
                     </option>
                   ))}
                 </select>
@@ -363,16 +361,16 @@ export default function CasesPage() {
                 <button
                   type="button"
                   onClick={() => setShowAssignModal(null)}
-                  className="px-3 py-1.5 text-xs text-zinc-400 hover:text-white"
+                  className="px-4 py-2 font-label text-xs text-on-surface-variant hover:text-on-surface font-semibold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={assigning || !selectedUserId}
-                  className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 text-xs font-semibold disabled:opacity-50"
+                  className="px-5 py-2 rounded-full bg-primary hover:bg-primary-container text-on-primary font-label text-xs font-bold disabled:opacity-50 shadow-sm"
                 >
-                  {assigning ? "Assigning..." : "Assign to Case"}
+                  {assigning ? "Assigning..." : "Confirm Assignment"}
                 </button>
               </div>
             </form>
@@ -382,4 +380,3 @@ export default function CasesPage() {
     </div>
   );
 }
-
