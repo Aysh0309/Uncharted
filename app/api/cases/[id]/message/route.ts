@@ -6,6 +6,7 @@ import { classifyMessage, ingestFact } from "@/lib/ingest";
 import { answerQuestion } from "@/lib/query";
 import { checkRateLimit } from "@/lib/ratelimit";
 import { embed } from "@/lib/llm";
+import { getDb } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60; // 60s max serverless duration budget for robust pipeline completion
@@ -17,6 +18,7 @@ export const maxDuration = 60; // 60s max serverless duration budget for robust 
  * - Concurrently runs intent classification + text embedding to eliminate redundant network round trips.
  * - Routes to the extraction & memory ingestion pipeline for facts.
  * - Routes to vector retrieval + deterministic suspect/gap code + grounded LLM answering for questions.
+ * - Persists every interaction into the 'messages' collection so the investigator chatbox maintains persistent history.
  */
 export async function POST(
   req: NextRequest,
@@ -75,6 +77,8 @@ export async function POST(
       embed(text),
     ]);
 
+    const db = await getDb();
+
     // 3. Fact Ingestion Path
     if (classification === "fact") {
       const canWrite = await canWriteCaseById(session, caseId);
@@ -91,6 +95,32 @@ export async function POST(
 
       // Pass precomputed textEmbedding to skip redundant embedding step
       const ingestResult = await ingestFact(caseId, session.id, text, textEmbedding);
+
+      const assistantText = `Extracted ${ingestResult.eventsSaved} event(s) and synchronized ${
+        ingestResult.entitiesCreated + ingestResult.entitiesUpdated
+      } entity record(s) into case memory.`;
+
+      // Persist full conversation turn into messages collection
+      await db.collection("messages").insertOne({
+        caseId,
+        userId: session.id,
+        userName: session.name,
+        userRole: session.role,
+        text,
+        type: "fact",
+        assistantReply: {
+          text: assistantText,
+          noteId: ingestResult.noteId,
+          citations: [],
+          extractedStats: {
+            eventsSaved: ingestResult.eventsSaved,
+            entitiesCount: ingestResult.entitiesCreated + ingestResult.entitiesUpdated,
+            openQuestionsSaved: ingestResult.openQuestionsSaved,
+          },
+        },
+        createdAt: new Date(),
+      });
+
       return NextResponse.json({
         status: "ok",
         type: "fact",
@@ -113,6 +143,22 @@ export async function POST(
     if (classification === "question") {
       // Pass precomputed textEmbedding directly as questionEmbedding
       const answerResult = await answerQuestion(caseId, session.id, text, textEmbedding);
+
+      // Persist conversation turn into messages collection
+      await db.collection("messages").insertOne({
+        caseId,
+        userId: session.id,
+        userName: session.name,
+        userRole: session.role,
+        text,
+        type: "question",
+        assistantReply: {
+          text: answerResult.answer,
+          citations: answerResult.citations || [],
+        },
+        createdAt: new Date(),
+      });
+
       return NextResponse.json({
         status: "ok",
         type: "question",
@@ -133,6 +179,29 @@ export async function POST(
     }
 
     const answerResult = await answerQuestion(caseId, session.id, text, textEmbedding);
+
+    // Persist hybrid turn into messages collection
+    await db.collection("messages").insertOne({
+      caseId,
+      userId: session.id,
+      userName: session.name,
+      userRole: session.role,
+      text,
+      type: "both",
+      assistantReply: {
+        text: answerResult.answer,
+        noteId: ingestResult?.noteId,
+        citations: answerResult.citations || [],
+        extractedStats: ingestResult
+          ? {
+              eventsSaved: ingestResult.eventsSaved,
+              entitiesCount: ingestResult.entitiesCreated + ingestResult.entitiesUpdated,
+              openQuestionsSaved: ingestResult.openQuestionsSaved,
+            }
+          : undefined,
+      },
+      createdAt: new Date(),
+    });
 
     return NextResponse.json({
       status: "ok",

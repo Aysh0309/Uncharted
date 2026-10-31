@@ -142,6 +142,7 @@ export const QueryCitationSchema = z.object({
   noteId: z.string(),
   quote: z.string().optional(),
   relevance: z.string().optional(),
+  snippet: z.string().optional(),
 });
 export type QueryCitation = z.infer<typeof QueryCitationSchema>;
 
@@ -155,6 +156,33 @@ export const QuerySchema = z.object({
   createdAt: z.date().default(() => new Date()),
 });
 export type Query = z.infer<typeof QuerySchema>;
+
+// ==========================================
+// 8. Messages Collection (Chat history between investigators and CaseMemory)
+// ==========================================
+export const MessageSchema = z.object({
+  _id: ObjectIdSchema.optional(),
+  caseId: z.string(),
+  userId: z.string(),
+  userName: z.string().default("Investigator"),
+  userRole: UserRoleSchema.default("investigator"),
+  text: z.string().min(1),
+  type: z.enum(["fact", "question", "both"]).default("question"),
+  assistantReply: z.object({
+    text: z.string(),
+    noteId: z.string().optional(),
+    citations: z.array(QueryCitationSchema).default([]),
+    extractedStats: z
+      .object({
+        eventsSaved: z.number().optional(),
+        entitiesCount: z.number().optional(),
+        openQuestionsSaved: z.number().optional(),
+      })
+      .optional(),
+  }),
+  createdAt: z.date().default(() => new Date()),
+});
+export type ChatMessageDoc = z.infer<typeof MessageSchema>;
 
 // ==========================================
 // Validation Helpers for API input payloads

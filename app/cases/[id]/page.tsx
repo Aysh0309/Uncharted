@@ -54,6 +54,8 @@ interface ChatMessage {
   id: string;
   sender: "user" | "assistant";
   text: string;
+  userName?: string;
+  userRole?: string;
   type?: "fact" | "question" | "both";
   noteId?: string;
   citations?: Array<{ noteId: string; snippet?: string }>;
@@ -125,13 +127,17 @@ export default function CaseWorkspacePage() {
       setSuspects(data.suspects || []);
       setGaps(data.gaps || []);
 
-      if (messages.length === 0 && data.queries && data.queries.length > 0) {
+      if (Array.isArray(data.chatMessages) && data.chatMessages.length > 0) {
+        setMessages(data.chatMessages);
+      } else if (data.queries && data.queries.length > 0) {
         const history: ChatMessage[] = [];
         for (const q of data.queries) {
           history.push({
             id: `q-usr-${q.id}`,
             sender: "user",
             text: q.question,
+            userName: "Investigator",
+            userRole: "investigator",
             timestamp: q.createdAt,
           });
           history.push({
@@ -190,6 +196,8 @@ export default function CaseWorkspacePage() {
       id: `msg-usr-${Date.now()}`,
       sender: "user",
       text: trimmed,
+      userName: user?.name || "Investigator",
+      userRole: user?.role || "investigator",
       timestamp: new Date().toISOString(),
     };
 
@@ -398,14 +406,19 @@ export default function CaseWorkspacePage() {
                   <div className="flex flex-col items-end gap-1.5 max-w-2xl ml-auto w-full">
                     <div className="flex items-center gap-2 px-1">
                       <span className="font-label text-[11px] text-on-surface-variant font-semibold">
-                        Investigator
+                        {m.userName || "Investigator"}
                       </span>
+                      {m.userRole && (
+                        <span className="font-label text-[9px] uppercase px-1.5 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-semibold">
+                          {m.userRole}
+                        </span>
+                      )}
                       <span className="font-label text-[10px] text-outline">
                         {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
                     <div className="p-4 bg-surface-container rounded-3xl rounded-br-lg text-on-surface shadow-subtle border border-outline-variant/20 w-full">
-                      <p className="text-sm font-medium text-primary leading-relaxed">
+                      <p className="text-sm font-medium text-primary leading-relaxed whitespace-pre-wrap">
                         {m.text}
                       </p>
                     </div>
