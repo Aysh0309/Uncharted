@@ -83,12 +83,6 @@ export default function Home() {
                 arrow_forward
               </span>
             </Link>
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-2 px-5 py-3.5 rounded-full bg-white/15 backdrop-blur-md hover:bg-white/25 text-white font-label text-xs font-bold transition-all duration-200 border border-white/30 shadow-subtle hover:scale-[1.02]"
-            >
-              <span>Demo Roles Login</span>
-            </Link>
           </div>
 
           {/* 3 Core Highlights (Frosted Glassmorphic Cards) */}
