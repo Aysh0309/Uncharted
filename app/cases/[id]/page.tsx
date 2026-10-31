@@ -936,8 +936,8 @@ export default function CaseWorkspacePage() {
           </div>
         </section>
 
-        /* ═════════════════════════════════════════════════════════════
-            ADJUSTABLE RESIZE DIVIDER (Desktop only)
+        {/* ═════════════════════════════════════════════════════════════
+        ADJUSTABLE RESIZE DIVIDER (Desktop only)
         ══════════════════════════════════════════════════════════════ */}
         <div
           role="separator"
