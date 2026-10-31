@@ -88,6 +88,13 @@ export default function CaseWorkspacePage() {
   const [activeRightTab, setActiveRightTab] = useState<"timeline" | "suspects" | "gaps">("timeline");
   const [mobileTab, setMobileTab] = useState<"chat" | "timeline">("chat");
 
+  // Adjustable Split Pane State
+  const [splitRatio, setSplitRatio] = useState<number>(55);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isLgScreen, setIsLgScreen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const workspaceContainerRef = useRef<HTMLDivElement>(null);
+
   // Chat State
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState("");
@@ -100,12 +107,23 @@ export default function CaseWorkspacePage() {
   // Toast notifications
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-  const addToast = (type: "success" | "error" | "info", message: string) => {
+  const addToast = (type: "success" | "error" | "info", message: string | any) => {
+    let cleanMsg = message;
+    if (typeof message === "string" && message.trim().startsWith("[")) {
+      try {
+        const parsed = JSON.parse(message);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          cleanMsg = parsed.map((p) => p.message || p.code || "Validation error").join("; ");
+        }
+      } catch {}
+    } else if (typeof message === "object") {
+      cleanMsg = message?.message || "Execution notice";
+    }
     const id = `toast-${Date.now()}-${Math.random()}`;
-    setToasts((prev) => [...prev, { id, type, message }]);
+    setToasts((prev) => [...prev, { id, type, message: cleanMsg }]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 4000);
+    }, 4500);
   };
 
   const loadCaseData = async () => {
@@ -160,6 +178,92 @@ export default function CaseWorkspacePage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, submitting]);
+
+  // Handle client screen sizing and restore saved split ratio
+  useEffect(() => {
+    setMounted(true);
+    const checkScreen = () => {
+      setIsLgScreen(window.innerWidth >= 1024);
+    };
+    checkScreen();
+    window.addEventListener("resize", checkScreen);
+
+    try {
+      const saved = localStorage.getItem("casememory_split_ratio");
+      if (saved) {
+        const parsed = parseFloat(saved);
+        if (!isNaN(parsed) && parsed >= 20 && parsed <= 80) {
+          setSplitRatio(parsed);
+        }
+      }
+    } catch {}
+
+    return () => window.removeEventListener("resize", checkScreen);
+  }, []);
+
+  // Window pointer event listener for smooth drag-to-resize
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handlePointerMove = (e: PointerEvent) => {
+      if (!workspaceContainerRef.current) return;
+      const rect = workspaceContainerRef.current.getBoundingClientRect();
+      if (rect.width <= 0) return;
+      const offsetX = e.clientX - rect.left;
+      const pct = (offsetX / rect.width) * 100;
+      // Clamp split ratio safely between 20% and 80%
+      const clamped = Math.max(20, Math.min(80, pct));
+      setSplitRatio(clamped);
+    };
+
+    const handlePointerUp = () => {
+      setIsDragging(false);
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+    window.addEventListener("pointercancel", handlePointerUp);
+
+    // Suppress document text selection and force resize cursor
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("pointercancel", handlePointerUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+  }, [isDragging]);
+
+  // Persist split ratio preference
+  useEffect(() => {
+    if (mounted && !isDragging) {
+      try {
+        localStorage.setItem("casememory_split_ratio", splitRatio.toFixed(1));
+      } catch {}
+    }
+  }, [isDragging, splitRatio, mounted]);
+
+  const handleSplitterKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      setSplitRatio((prev) => Math.max(20, Math.round(prev - 4)));
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      setSplitRatio((prev) => Math.min(80, Math.round(prev + 4)));
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      setSplitRatio(20);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      setSplitRatio(80);
+    } else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      setSplitRatio(55);
+    }
+  };
 
   const handleDeleteCase = async () => {
     const confirmed = window.confirm(
@@ -342,6 +446,61 @@ export default function CaseWorkspacePage() {
 
           {/* Right: Actions */}
           <div className="flex items-center gap-2 shrink-0">
+            {/* Adjustable Split Presets (Desktop) */}
+            <div
+              className="hidden lg:flex items-center p-0.5 rounded-lg bg-surface-container border border-outline-variant/30 gap-0.5 font-mono text-[10px]"
+              title="Adjust workspace split layout"
+            >
+              <button
+                type="button"
+                onClick={() => setSplitRatio(35)}
+                title="Matrix Focus (35% Chat / 65% Matrix)"
+                className={`px-2 py-0.5 rounded font-bold transition-all cursor-pointer ${
+                  Math.abs(splitRatio - 35) < 3
+                    ? "bg-primary text-on-primary shadow-xs"
+                    : "text-on-surface-variant hover:bg-surface-container-high"
+                }`}
+              >
+                35:65
+              </button>
+              <button
+                type="button"
+                onClick={() => setSplitRatio(50)}
+                title="Balanced (50% Chat / 50% Matrix)"
+                className={`px-2 py-0.5 rounded font-bold transition-all cursor-pointer ${
+                  Math.abs(splitRatio - 50) < 3
+                    ? "bg-primary text-on-primary shadow-xs"
+                    : "text-on-surface-variant hover:bg-surface-container-high"
+                }`}
+              >
+                50:50
+              </button>
+              <button
+                type="button"
+                onClick={() => setSplitRatio(65)}
+                title="Chat Focus (65% Chat / 35% Matrix)"
+                className={`px-2 py-0.5 rounded font-bold transition-all cursor-pointer ${
+                  Math.abs(splitRatio - 65) < 3
+                    ? "bg-primary text-on-primary shadow-xs"
+                    : "text-on-surface-variant hover:bg-surface-container-high"
+                }`}
+              >
+                65:35
+              </button>
+              <button
+                type="button"
+                onClick={() => setSplitRatio(55)}
+                title="Reset to Default (55:45)"
+                className={`p-1 rounded transition-colors cursor-pointer ${
+                  Math.abs(splitRatio - 55) < 2
+                    ? "text-secondary font-bold"
+                    : "text-on-surface-variant hover:text-primary hover:bg-surface-container-high"
+                }`}
+              >
+                <span className="material-symbols-outlined text-[13px] block">restart_alt</span>
+              </button>
+            </div>
+
             {user?.role === "admin" && (
               <button
                 onClick={handleDeleteCase}
@@ -423,33 +582,45 @@ export default function CaseWorkspacePage() {
       {/* ─────────────────────────────────────────────────────────────
           2. DUAL-SECTION WORKSPACE (Split Panels with Independent Scrolls)
       ────────────────────────────────────────────────────────────── */}
-      <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden w-full">
+      <div
+        ref={workspaceContainerRef}
+        className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden w-full relative"
+      >
         {/* ═════════════════════════════════════════════════════════════
             SECTION 1: CLASSIFIED INVESTIGATION CHAT
         ══════════════════════════════════════════════════════════════ */}
         <section
-          className={`flex-1 lg:w-[57%] flex flex-col h-full min-h-0 overflow-hidden border-b lg:border-b-0 lg:border-r border-outline-variant/30 bg-surface ${
+          style={
+            mounted && isLgScreen
+              ? { width: `${splitRatio}%`, flex: `0 0 ${splitRatio}%` }
+              : undefined
+          }
+          className={`flex-1 flex flex-col h-full min-h-0 overflow-hidden border-b lg:border-b-0 bg-surface ${
+            isDragging
+              ? "pointer-events-none select-none"
+              : "transition-[width,flex-basis] duration-150 ease-out"
+          } ${
             mobileTab === "chat" ? "flex" : "hidden lg:flex"
           }`}
         >
           {/* Section 1 Header */}
-          <div className="shrink-0 px-4 py-2.5 border-b border-outline-variant/30 bg-surface-container-low/70 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-primary text-on-primary tracking-wider">
+          <div className="shrink-0 px-4 py-2.5 border-b border-outline-variant/30 bg-surface-container-low/70 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="font-mono text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-primary text-on-primary tracking-wider shrink-0">
                 SEC-01
               </span>
-              <div>
-                <h2 className="font-headline font-bold text-xs text-primary uppercase tracking-wider flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Investigation Chat &amp; Evidentiary Query
+              <div className="min-w-0">
+                <h2 className="font-headline font-bold text-xs text-primary uppercase tracking-wider flex items-center gap-1.5 truncate">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                  <span className="truncate">Investigation Chat &amp; Evidentiary Query</span>
                 </h2>
-                <span className="font-mono text-[9px] text-on-surface-variant block">
+                <span className="font-mono text-[9px] text-on-surface-variant block truncate">
                   TRANSACTIONAL CONSOLE // DUAL-PIPELINE MEMORY
                 </span>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <span className="font-mono text-[9px] px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-bold border border-outline-variant/30 hidden sm:inline-block">
                 RBAC: {user?.role?.toUpperCase()}
               </span>
@@ -680,31 +851,120 @@ export default function CaseWorkspacePage() {
         </section>
 
         {/* ═════════════════════════════════════════════════════════════
+            ADJUSTABLE RESIZE DIVIDER (Desktop only)
+        ══════════════════════════════════════════════════════════════ */}
+        <div
+          role="separator"
+          tabIndex={0}
+          aria-orientation="vertical"
+          aria-label="Adjust width between Chat and Evidentiary Matrix"
+          aria-valuenow={Math.round(splitRatio)}
+          aria-valuemin={20}
+          aria-valuemax={80}
+          onPointerDown={(e) => {
+            e.preventDefault();
+            setIsDragging(true);
+          }}
+          onDoubleClick={() => setSplitRatio(55)}
+          onKeyDown={handleSplitterKeyDown}
+          className={`hidden lg:flex flex-col items-center justify-center relative w-2.5 shrink-0 cursor-col-resize select-none z-30 group outline-none transition-colors border-x border-outline-variant/30 ${
+            isDragging
+              ? "bg-secondary/30 border-secondary/60 ring-2 ring-secondary/30"
+              : "bg-surface-container-low hover:bg-secondary/15 hover:border-secondary/40"
+          }`}
+          title="Drag to resize sections • Double-click to reset (55:45)"
+        >
+          {/* Center line */}
+          <div
+            className={`absolute inset-y-0 w-px transition-colors ${
+              isDragging ? "bg-secondary" : "bg-outline-variant/50 group-hover:bg-secondary/70"
+            }`}
+          />
+
+          {/* Tactile Grab Handle Pill with collapse/expand arrows */}
+          <div
+            className={`relative z-10 flex flex-col items-center justify-center py-1.5 px-0.5 rounded-full border shadow-xs transition-all ${
+              isDragging
+                ? "bg-secondary text-on-primary border-secondary scale-110 shadow-md ring-2 ring-secondary/30"
+                : "bg-surface-container-high border-outline-variant/40 text-on-surface-variant group-hover:border-secondary/60 group-hover:bg-secondary-fixed group-hover:text-on-secondary-fixed"
+            }`}
+          >
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSplitRatio((prev) => (prev > 30 ? 25 : 55));
+              }}
+              title="Minimize Chat (25%) / Restore"
+              className="p-0.5 hover:text-primary transition-colors cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[12px] leading-none block">
+                chevron_left
+              </span>
+            </button>
+            <span className="material-symbols-outlined text-[13px] leading-none my-0.5 select-none pointer-events-none">
+              drag_indicator
+            </span>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSplitRatio((prev) => (prev < 70 ? 75 : 55));
+              }}
+              title="Maximize Chat (75%) / Restore"
+              className="p-0.5 hover:text-primary transition-colors cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[12px] leading-none block">
+                chevron_right
+              </span>
+            </button>
+          </div>
+
+          {/* Floating live percentage pill during hover or drag */}
+          <div
+            className={`absolute top-4 pointer-events-none transition-all duration-150 transform -translate-x-1/2 left-1/2 whitespace-nowrap z-40 ${
+              isDragging
+                ? "opacity-100 scale-100"
+                : "opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100"
+            }`}
+          >
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-primary text-on-primary font-mono text-[9px] font-bold shadow-lg border border-outline-variant/40 tracking-wider">
+              <span>CHAT {Math.round(splitRatio)}%</span>
+              <span className="text-secondary">•</span>
+              <span>MATRIX {Math.round(100 - splitRatio)}%</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ═════════════════════════════════════════════════════════════
             SECTION 2: CLASSIFIED TIMELINES & INTELLIGENCE DOSSIER
         ══════════════════════════════════════════════════════════════ */}
         <section
-          className={`w-full lg:w-[43%] flex flex-col h-full min-h-0 overflow-hidden bg-surface-container-lowest/50 ${
+          style={mounted && isLgScreen ? { flex: "1 1 0%", minWidth: 0 } : undefined}
+          className={`w-full flex-1 flex flex-col h-full min-h-0 overflow-hidden bg-surface-container-lowest/50 ${
+            isDragging ? "pointer-events-none select-none" : ""
+          } ${
             mobileTab === "timeline" ? "flex" : "hidden lg:flex"
           }`}
         >
           {/* Section 2 Header & Classified Tabs */}
           <div className="shrink-0 px-4 py-2.5 border-b border-outline-variant/30 bg-surface-container-low/70 flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-secondary text-on-primary tracking-wider">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="font-mono text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-secondary text-on-primary tracking-wider shrink-0">
                   SEC-02
                 </span>
-                <div>
-                  <h2 className="font-headline font-bold text-xs text-primary uppercase tracking-wider">
+                <div className="min-w-0">
+                  <h2 className="font-headline font-bold text-xs text-primary uppercase tracking-wider truncate">
                     Evidentiary Matrix &amp; Timeline
                   </h2>
-                  <span className="font-mono text-[9px] text-on-surface-variant block">
+                  <span className="font-mono text-[9px] text-on-surface-variant block truncate">
                     CHRONOLOGICAL DOSSIER // SYNCHRONIZED
                   </span>
                 </div>
               </div>
 
-              <span className="font-mono text-[9px] px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-bold border border-outline-variant/30">
+              <span className="font-mono text-[9px] px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-bold border border-outline-variant/30 shrink-0">
                 TOTAL TRACES: {events.length + suspects.length + gaps.length}
               </span>
             </div>

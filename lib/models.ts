@@ -112,7 +112,7 @@ export const EntitySchema = z.object({
   type: EntityTypeSchema,
   role: EntityRoleSchema.default("other"),
   alibiStatus: AlibiStatusSchema.default("unknown"),
-  alibiDetails: z.string().optional(),
+  alibiDetails: z.string().nullable().optional(),
   eventIds: z.array(z.string()).default([]),
   noteIds: z.array(z.string()).default([]),
   createdAt: z.date().default(() => new Date()),
