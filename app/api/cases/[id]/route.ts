@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 /**
  * GET /api/cases/[id]
  * Retrieves comprehensive case context (case metadata, timeline events, entities,
- * notes, open questions, computed suspects & gaps), enforcing RBAC.
+ * notes, open questions, computed suspects & gaps, and unified chat history), enforcing RBAC.
  */
 export async function GET(
   req: NextRequest,
@@ -49,7 +49,7 @@ export async function GET(
     }
 
     // Parallel fetch of all case collections (omitting high-dimensional vectors for fast wire transfer)
-    const [events, entities, notes, openQuestions, queriesHistory] =
+    const [events, entities, notes, openQuestions, queriesHistory, rawMessages] =
       await Promise.all([
         db
           .collection("events")
@@ -64,7 +64,7 @@ export async function GET(
         db
           .collection("notes")
           .find({ caseId }, { projection: { embedding: 0 } })
-          .sort({ createdAt: -1 })
+          .sort({ createdAt: 1 })
           .toArray(),
         db
           .collection("openQuestions")
@@ -75,13 +75,96 @@ export async function GET(
           .collection("queries")
           .find({ caseId })
           .sort({ createdAt: 1 })
-          .limit(20)
+          .toArray(),
+        db
+          .collection("messages")
+          .find({ caseId })
+          .sort({ createdAt: 1 })
           .toArray(),
       ]);
 
     // Compute suspect ranking & evidentiary gaps in code
     const suspects = computeSuspectScores(entities, events, notes);
     const gaps = detectGaps(events, entities, openQuestions);
+
+    // Build unified chronological chatbox stream
+    const chatMessages: any[] = [];
+    if (rawMessages.length > 0) {
+      for (const m of rawMessages) {
+        chatMessages.push({
+          id: `usr-${m._id.toString()}`,
+          sender: "user",
+          text: m.text,
+          userName: m.userName || "Investigator",
+          userRole: m.userRole || "investigator",
+          timestamp: m.createdAt,
+        });
+        chatMessages.push({
+          id: `ast-${m._id.toString()}`,
+          sender: "assistant",
+          text: m.assistantReply?.text || "",
+          type: m.type,
+          noteId: m.assistantReply?.noteId,
+          citations: m.assistantReply?.citations || [],
+          extractedStats: m.assistantReply?.extractedStats,
+          timestamp: m.createdAt,
+        });
+      }
+    } else {
+      // Graceful fallback: synthesize chronological chat from notes and queries
+      const unifiedHistory: Array<{ timestamp: Date; user: any; assistant: any }> = [];
+      for (const n of notes) {
+        const noteEvents = events.filter((e) => e.noteId === n._id.toString());
+        unifiedHistory.push({
+          timestamp: n.createdAt,
+          user: {
+            id: `note-usr-${n._id.toString()}`,
+            sender: "user",
+            text: n.text,
+            userName: "Investigator",
+            userRole: "investigator",
+            timestamp: n.createdAt,
+          },
+          assistant: {
+            id: `note-ast-${n._id.toString()}`,
+            sender: "assistant",
+            text: `Extracted ${noteEvents.length} event(s) and synchronized into case memory.`,
+            type: "fact",
+            noteId: n._id.toString(),
+            extractedStats: { eventsSaved: noteEvents.length },
+            timestamp: n.createdAt,
+          },
+        });
+      }
+      for (const q of queriesHistory) {
+        unifiedHistory.push({
+          timestamp: q.createdAt,
+          user: {
+            id: `q-usr-${q._id.toString()}`,
+            sender: "user",
+            text: q.question,
+            userName: "Investigator",
+            userRole: "investigator",
+            timestamp: q.createdAt,
+          },
+          assistant: {
+            id: `q-ast-${q._id.toString()}`,
+            sender: "assistant",
+            text: q.answer,
+            type: "question",
+            citations: q.citations || [],
+            timestamp: q.createdAt,
+          },
+        });
+      }
+      unifiedHistory.sort(
+        (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+      );
+      for (const turn of unifiedHistory) {
+        chatMessages.push(turn.user);
+        chatMessages.push(turn.assistant);
+      }
+    }
 
     return NextResponse.json({
       status: "ok",
@@ -139,6 +222,7 @@ export async function GET(
         citations: q.citations || [],
         createdAt: q.createdAt,
       })),
+      chatMessages,
     });
   } catch (err: any) {
     return NextResponse.json(
@@ -151,7 +235,7 @@ export async function GET(
 /**
  * DELETE /api/cases/[id]
  * Administrator-only endpoint to permanently remove a case and all linked records
- * (notes, timeline events, entities, open questions, and queries).
+ * (notes, timeline events, entities, open questions, queries, and messages).
  */
 export async function DELETE(
   req: NextRequest,
@@ -197,6 +281,7 @@ export async function DELETE(
       db.collection("entities").deleteMany({ caseId }),
       db.collection("openQuestions").deleteMany({ caseId }),
       db.collection("queries").deleteMany({ caseId }),
+      db.collection("messages").deleteMany({ caseId }),
     ]);
 
     return NextResponse.json({
