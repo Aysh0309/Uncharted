@@ -435,7 +435,7 @@ export default function CaseWorkspacePage() {
     }
   };
 
-  const handleConfirmDiscrepancy = async (d: DiscrepancyItem, chosenOption?: string) => {
+  const handleConfirmDiscrepancy = async (d: DiscrepancyItem) => {
     try {
       if (d.field === "alibiStatus") {
         const targetEntity = entities.find(
@@ -679,814 +679,799 @@ export default function CaseWorkspacePage() {
                 </span>
               </div>
             </div>
-            ) : (
-            messages.map((m) => (
-            <div key={m.id} className="w-full">
-              {m.sender === "user" ? (
-                /* User Prompt Node (Direct from snitch.html) */
-                <div className="flex flex-col items-end gap-1.5 max-w-2xl ml-auto w-full">
-                  <div className="flex items-center gap-2 px-1">
-                    <span className="font-label text-[11px] text-on-surface-variant font-semibold">
-                      {m.userName || "Investigator"}
-                    </span>
-                    {m.userRole && (
-                      <span className="font-label text-[9px] uppercase px-1.5 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-semibold">
-                        {m.userRole}
-                      </span>
-                    )}
-                    <span className="font-label text-[10px] text-outline">
-                      {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                  <div className="p-4 bg-surface-container rounded-3xl rounded-br-lg text-on-surface shadow-subtle border border-outline-variant/20 w-full">
-                    <p className="text-sm font-medium text-primary leading-relaxed whitespace-pre-wrap">
-                      {m.text}
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                /* Agent Response Container (Direct from snitch.html) */
-                <div className="flex flex-col gap-3 max-w-3xl w-full">
-                  {/* Meta Header */}
-                  <div className="flex items-center justify-between px-1">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-xl bg-primary text-on-primary flex items-center justify-center shadow-xs">
-                        <span className="material-symbols-outlined text-[16px]">token</span>
-                      </div>
-                      <span className="font-headline font-bold text-sm text-primary">
-                        CaseMemory Thought Core
-                      </span>
-                      <span className="font-label text-[10px] px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-semibold">
-                        Latest Gemini Flash • Deep Vector
-                      </span>
-                    </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="font-mono text-[9px] px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-bold border border-outline-variant/30 hidden sm:inline-block">
-                        RBAC: {user?.role?.toUpperCase()}
-                      </span>
-                      <span className="font-mono text-[9px] text-outline">
-                        {messages.length} ENTRIES
-                      </span>
-                    </div>
-                  </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="font-mono text-[9px] px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-bold border border-outline-variant/30 hidden sm:inline-block">
+                RBAC: {user?.role?.toUpperCase()}
+              </span>
+              <span className="font-mono text-[9px] text-outline">
+                {messages.length} ENTRIES
+              </span>
+            </div>
+          </div>
 
-                  {/* Messages Stream (Independent Scroll) */}
-                  <div className="flex-1 min-h-0 overflow-y-auto px-4 lg:px-6 py-4 space-y-4">
-                    {/* Top Security Header Marker */}
-                    <div className="flex items-center justify-center gap-2 py-1">
-                      <div className="h-px bg-outline-variant/30 flex-1" />
-                      <span className="font-mono text-[9px] text-on-surface-variant uppercase tracking-widest px-2.5 py-0.5 rounded border border-outline-variant/30 bg-surface-container-low">
-                        EVIDENTIARY AUDIT LOG • SESSION ENCRYPTED
-                      </span>
-                      <div className="h-px bg-outline-variant/30 flex-1" />
-                    </div>
-
-                    {messages.length === 0 ? (
-                      <div className="p-8 rounded-2xl bg-surface-container-low border border-outline-variant/30 text-center space-y-3 my-8">
-                        <div className="w-10 h-10 mx-auto rounded-xl bg-primary text-on-primary flex items-center justify-center shadow-xs">
-                          <span className="material-symbols-outlined text-[20px]">fingerprint</span>
-                        </div>
-                        <div className="space-y-1">
-                          <h3 className="font-mono font-bold text-xs uppercase tracking-wider text-primary">
-                            [EVIDENTIARY STREAM INITIALIZED]
-                          </h3>
-                          <p className="font-sans text-xs text-on-surface-variant max-w-md mx-auto leading-relaxed">
-                            {isViewer
-                              ? "Viewer role active: Ask evidentiary questions about timeline events, suspects, or missing leads."
-                              : "Type raw case notes to extract chronological events and entities, or ask investigative questions with source citations."}
-                          </p>
-                        </div>
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container font-mono text-[10px] text-secondary font-semibold">
-                          <span className="material-symbols-outlined text-[13px]">bolt</span>
-                          Dual-Pipeline Active: Auto-detects notes vs. queries
-                        </div>
-                      </div>
-                    ) : (
-                      messages.map((m) => (
-                        <div key={m.id} className="w-full">
-                          {m.sender === "user" ? (
-                            /* User Prompt: Classified Officer Log */
-                            <div className="flex flex-col items-end gap-1 max-w-xl ml-auto w-full">
-                              <div className="flex items-center gap-2 px-1">
-                                <span className="font-mono text-[10px] font-bold text-secondary tracking-wider uppercase">
-                                  [INVESTIGATOR] • {user?.name || "OFFICER"}
-                                </span>
-                                <span className="font-mono text-[9px] text-outline">
-                                  {new Date(m.timestamp).toLocaleTimeString([], {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                    second: "2-digit",
-                                  })}
-                                </span>
-                              </div>
-                              <div className="p-3.5 bg-surface-container-high rounded-2xl rounded-tr-xs text-primary shadow-xs border-l-2 border-secondary border-t border-r border-b border-outline-variant/30 w-full">
-                                <p className="text-xs font-medium leading-relaxed select-text">
-                                  {m.text}
-                                </p>
-                              </div>
-                            </div>
-                          ) : (
-                            /* Agent Response: Classified Forensic Memory Core */
-                            <div className="flex flex-col gap-2 max-w-2xl w-full">
-                              {/* Meta Header */}
-                              <div className="flex items-center justify-between px-1">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-6 h-6 rounded-md bg-primary text-on-primary flex items-center justify-center shadow-xs">
-                                    <span className="material-symbols-outlined text-[14px]">psychology</span>
-                                  </div>
-                                  <span className="font-mono font-bold text-xs text-primary uppercase tracking-wide">
-                                    CaseMemory Core
-                                  </span>
-                                  <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant border border-outline-variant/30">
-                                    GEMINI FLASH • VECTORS
-                                  </span>
-                                </div>
-
-                                {/* Mode Stamp */}
-                                {m.type === "fact" && (
-                                  <span className="font-mono text-[9px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold uppercase">
-                                    ✓ FACT INGESTED
-                                  </span>
-                                )}
-                                {m.type === "question" && (
-                                  <span className="font-mono text-[9px] px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container border border-secondary/30 font-bold uppercase">
-                                    🔍 MEMORY RETRIEVAL
-                                  </span>
-                                )}
-                                {m.type === "both" && (
-                                  <span className="font-mono text-[9px] px-2 py-0.5 rounded bg-secondary-fixed text-on-secondary-fixed border border-secondary font-bold uppercase">
-                                    ⚡ INGEST + RETRIEVAL
-                                  </span>
-                                )}
-                              </div>
-
-                              {/* Response Dossier Card */}
-                              <div className="bg-surface-container-lowest rounded-2xl p-4 shadow-subtle border border-outline-variant/40 space-y-2.5">
-                                {/* Exhibit intake confirmation badge */}
-                                {m.noteId && (
-                                  <div className="p-2.5 bg-surface-container-low rounded-xl flex items-center justify-between border border-outline-variant/30">
-                                    <div className="flex items-center gap-2">
-                                      <span className="material-symbols-outlined text-secondary text-[16px]">
-                                        policy
-                                      </span>
-                                      <span className="font-mono text-[11px] font-bold text-primary">
-                                        EXHIBIT RECORD ARCHIVED [NOTE #{m.noteId.slice(-6).toUpperCase()}]
-                                      </span>
-                                    </div>
-                                    <button
-                                      type="button"
-                                      onClick={() => setSelectedNoteId(m.noteId!)}
-                                      className="font-mono text-[10px] font-bold text-secondary hover:underline cursor-pointer uppercase flex items-center gap-0.5"
-                                    >
-                                      <span>INSPECT</span>
-                                      <span className="material-symbols-outlined text-[13px]">open_in_new</span>
-                                    </button>
-                                  </div>
-                                )}
-
-                                {/* Formatted Evidentiary Text with Clickable Citations */}
-                                <div className="text-xs text-on-surface leading-relaxed select-text font-sans">
-                                  <FormattedEvidentiaryText
-                                    text={m.text}
-                                    onSelectNote={(nId) => setSelectedNoteId(nId)}
-                                  />
-                                </div>
-
-                                {/* Citations / Source Provenance Footer */}
-                                {m.citations && m.citations.length > 0 && (
-                                  <div className="pt-2 border-t border-outline-variant/20 flex flex-wrap items-center gap-1.5">
-                                    <span className="font-mono text-[9px] uppercase font-bold text-on-surface-variant tracking-wider mr-1">
-                                      [EXHIBIT PROVENANCE]:
-                                    </span>
-                                    {m.citations.map((c) => (
-                                      <button
-                                        key={c.noteId}
-                                        onClick={() => setSelectedNoteId(c.noteId)}
-                                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container hover:bg-surface-container-high text-primary font-mono text-[10px] font-bold border border-outline-variant/40 transition-colors cursor-pointer"
-                                      >
-                                        <span className="material-symbols-outlined text-[12px] text-secondary">
-                                          description
-                                        </span>
-                                        <span>EXHIBIT #{c.noteId.slice(-6).toUpperCase()}</span>
-                                      </button>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ))
-                    )}
-
-                    {submitting && (
-                      <div className="flex items-center gap-2.5 p-3 rounded-xl bg-surface-container-low border border-outline-variant/30 text-xs text-on-surface-variant font-mono">
-                        <span className="material-symbols-outlined text-[16px] text-secondary animate-spin">
-                          sync
-                        </span>
-                        <span className="text-[11px] tracking-wide">
-                          [ROUTING INTENT // SYNCHRONIZING VECTOR STORE...]
-                        </span>
-                      </div>
-                    )}
-
-                    <div ref={messagesEndRef} />
-                  </div>
-
-                  {/* ─────────────────────────────────────────────────────────
-              Chat Input Area (Docked strictly at bottom of Chat Section)
-          ────────────────────────────────────────────────────────── */}
-                  <div className="shrink-0 p-3 lg:p-4 bg-surface-container-low/95 border-t border-outline-variant/30">
-                    <form
-                      onSubmit={handleSendMessage}
-                      className="bg-surface-container-lowest rounded-xl border border-outline-variant/40 shadow-xs p-2 flex flex-col gap-1.5 focus-within:border-secondary transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-secondary text-[18px] ml-1 shrink-0">
-                          {isViewer ? "lock" : "rate_review"}
-                        </span>
-
-                        <input
-                          type="text"
-                          value={inputText}
-                          onChange={(e) => setInputText(e.target.value)}
-                          placeholder={
-                            isViewer
-                              ? "Viewer Query: 'Who has a broken alibi?' / 'Summary of 30th October'..."
-                              : "Type incident notes or query memory: 'Suspect observed leaving via Gate 2'..."
-                          }
-                          disabled={submitting}
-                          className="flex-1 bg-transparent border-0 outline-none text-on-surface placeholder:text-on-surface-variant/70 font-sans text-xs py-1"
-                        />
-
-                        <button
-                          type="submit"
-                          disabled={submitting || !inputText.trim()}
-                          className="w-8 h-8 rounded-lg bg-primary hover:bg-primary-container text-on-primary flex items-center justify-center transition-all shadow-xs shrink-0 disabled:opacity-40 cursor-pointer"
-                          title="Dispatch message to memory pipeline"
-                        >
-                          <span className="material-symbols-outlined text-[16px]">arrow_upward</span>
-                        </button>
-                      </div>
-
-                      {/* Sub-bar Classification Label */}
-                      <div className="flex items-center justify-between px-1.5 pt-1 border-t border-outline-variant/20 font-mono text-[9px] text-on-surface-variant">
-                        <div className="flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-secondary" />
-                          <span className="tracking-wide">
-                            {isViewer
-                              ? "ACCESS: READ-ONLY MEMORY RETRIEVAL"
-                              : "DUAL-PIPELINE: NOTE EXTRACTION & QUERY ENGINE"}
-                          </span>
-                        </div>
-                        <div className="hidden sm:flex items-center gap-1 text-outline">
-                          <span>DISPATCH:</span>
-                          <kbd className="px-1 py-0.2 rounded bg-surface-container font-bold text-[8px]">
-                            ENTER ↵
-                          </kbd>
-                        </div>
-                      </div>
-                    </form>
-                  </div>
-                </section>
-
-        {/* ═════════════════════════════════════════════════════════════
-            ADJUSTABLE RESIZE DIVIDER (Desktop only)
-        ══════════════════════════════════════════════════════════════ */}
-              <div
-                role="separator"
-                tabIndex={0}
-                aria-orientation="vertical"
-                aria-label="Adjust panel split"
-                onPointerDown={(e) => {
-                  e.preventDefault();
-                  setIsDragging(true);
-                }}
-                onDoubleClick={() => setSplitRatio(55)}
-                onKeyDown={handleSplitterKeyDown}
-                className={`hidden lg:flex items-center justify-center relative w-1.5 shrink-0 cursor-col-resize select-none z-30 group outline-none transition-colors ${isDragging
-                    ? "bg-secondary"
-                    : "bg-outline-variant/30 hover:bg-secondary/70"
-                  }`}
-                title="Drag to resize panels • Double-click to reset"
-              >
-                {/* Subtle minimal grab notch */}
-                <div
-                  className={`w-0.5 h-7 rounded-full transition-colors ${isDragging
-                      ? "bg-secondary-fixed"
-                      : "bg-outline-variant/60 group-hover:bg-secondary"
-                    }`}
-                />
-              </div>
-
-              {/* ═════════════════════════════════════════════════════════════
-            SECTION 2: CLASSIFIED TIMELINES & INTELLIGENCE DOSSIER
-        ══════════════════════════════════════════════════════════════ */}
-              <section
-                style={mounted && isLgScreen ? { flex: "1 1 0%", minWidth: 0 } : undefined}
-                className={`w-full flex-1 flex flex-col h-full min-h-0 overflow-hidden bg-surface-container-lowest/50 ${isDragging ? "pointer-events-none select-none" : ""
-                  } ${mobileTab === "timeline" ? "flex" : "hidden lg:flex"
-                  }`}
-              >
-                {/* Section 2 Header & Classified Tabs */}
-                <div className="shrink-0 px-4 py-2.5 border-b border-outline-variant/30 bg-surface-container-low/70 flex flex-col gap-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="font-mono text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-secondary text-on-primary tracking-wider shrink-0">
-                        SEC-02
-                      </span>
-                      <div className="min-w-0">
-                        <h2 className="font-headline font-bold text-xs text-primary uppercase tracking-wider truncate">
-                          Evidentiary Matrix &amp; Timeline
-                        </h2>
-                        <span className="font-mono text-[9px] text-on-surface-variant block truncate">
-                          CHRONOLOGICAL DOSSIER // SYNCHRONIZED
-                        </span>
-                      </div>
-                    </div>
-
-                    <span className="font-mono text-[9px] px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-bold border border-outline-variant/30 shrink-0">
-                      TOTAL TRACES: {events.length + suspects.length + gaps.length}
-                    </span>
-                  </div>
-
-                  {/* Classified Tab Strip */}
-                  <div className="flex items-center p-1 rounded-lg bg-surface-container border border-outline-variant/30 gap-1">
-                    <button
-                      onClick={() => setActiveRightTab("timeline")}
-                      className={`flex-1 py-1 px-2 rounded font-mono text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${activeRightTab === "timeline"
-                        ? "bg-primary text-on-primary shadow-xs"
-                        : "text-on-surface-variant hover:bg-surface-container-high"
-                        }`}
-                    >
-                      <span className="material-symbols-outlined text-[14px]">schedule</span>
-                      <span>TIMELINE ({events.length})</span>
-                    </button>
-
-                    <button
-                      onClick={() => setActiveRightTab("suspects")}
-                      className={`flex-1 py-1 px-2 rounded font-mono text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${activeRightTab === "suspects"
-                        ? "bg-primary text-on-primary shadow-xs"
-                        : "text-on-surface-variant hover:bg-surface-container-high"
-                        }`}
-                    >
-                      <span className="material-symbols-outlined text-[14px]">person_alert</span>
-                      <span>SUSPECTS ({suspects.length})</span>
-                    </button>
-
-                    <button
-                      onClick={() => setActiveRightTab("entities")}
-                      className={`flex-1 py-1 px-2 rounded font-mono text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${activeRightTab === "entities"
-                        ? "bg-primary text-on-primary shadow-xs"
-                        : "text-on-surface-variant hover:bg-surface-container-high"
-                        }`}
-                    >
-                      <span className="material-symbols-outlined text-[14px]">badge</span>
-                      <span>ENTITIES ({entities.length})</span>
-                    </button>
-
-                    <button
-                      onClick={() => setActiveRightTab("gaps")}
-                      className={`flex-1 py-1 px-2 rounded font-mono text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${activeRightTab === "gaps"
-                        ? "bg-primary text-on-primary shadow-xs"
-                        : "text-on-surface-variant hover:bg-surface-container-high"
-                        }`}
-                    >
-                      <span className="material-symbols-outlined text-[14px]">warning</span>
-                      <span>GAPS ({gaps.length})</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Timelines Stream (Independent Scroll) */}
-                <div className="flex-1 min-h-0 overflow-y-auto px-4 lg:px-5 py-4 space-y-3">
-                  {/* ─── TAB 1: Chronological Timeline ─── */}
-                  {activeRightTab === "timeline" && (
-                    <div className="flex flex-col gap-2.5">
-                      {events.length === 0 ? (
-                        <div className="p-8 text-center text-xs font-mono text-on-surface-variant rounded-xl bg-surface-container-lowest border border-outline-variant/30 space-y-2">
-                          <span className="material-symbols-outlined text-[24px] text-outline block">
-                            event_busy
-                          </span>
-                          <span>[NO CHRONOLOGICAL EVENTS RECORDED YET]</span>
-                          <p className="text-[11px] font-sans text-on-surface-variant">
-                            Ingest witness notes or case reports to build the chronological chain of custody.
-                          </p>
-                        </div>
-                      ) : (
-                        events.map((ev, idx) => (
-                          <div
-                            key={ev.id}
-                            className="p-3 rounded-xl bg-surface-container-lowest border border-outline-variant/30 shadow-xs space-y-2 group hover:border-secondary transition-colors relative border-l-3 border-l-secondary"
-                          >
-                            {/* Top Bar: Time & Location */}
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="font-mono text-[9px] font-bold px-1.5 py-0.2 rounded bg-surface-container text-secondary shrink-0">
-                                  #{String(idx + 1).padStart(2, "0")}
-                                </span>
-                                <span className="font-mono text-[11px] font-bold text-primary truncate">
-                                  {ev.whenText || "TIME UNSPECIFIED"}
-                                </span>
-                              </div>
-
-                              {ev.where && (
-                                <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-bold shrink-0 border border-outline-variant/20 flex items-center gap-1">
-                                  <span className="material-symbols-outlined text-[11px]">location_on</span>
-                                  <span className="truncate max-w-[130px]">{ev.where}</span>
-                                </span>
-                              )}
-                            </div>
-
-                            {/* Event Description */}
-                            <p className="text-xs text-on-surface font-medium leading-relaxed select-text font-sans">
-                              {ev.what}
-                            </p>
-
-                            {/* Bottom Bar: Involved Actors & Source Exhibit */}
-                            <div className="flex items-center justify-between pt-1.5 border-t border-outline-variant/20 gap-2">
-                              <div className="flex flex-wrap gap-1">
-                                {ev.who && ev.who.length > 0 ? (
-                                  ev.who.map((w) => (
-                                    <span
-                                      key={w}
-                                      className="font-mono text-[9px] px-1.5 py-0.2 rounded bg-surface-container text-secondary font-semibold"
-                                    >
-                                      @{w}
-                                    </span>
-                                  ))
-                                ) : (
-                                  <span className="font-mono text-[9px] text-outline">NO ACTORS IDENTIFIED</span>
-                                )}
-                              </div>
-
-                              <button
-                                onClick={() => setSelectedNoteId(ev.noteId)}
-                                className="font-mono text-[10px] text-secondary font-bold hover:underline cursor-pointer shrink-0"
-                                title="Inspect original source note"
-                              >
-                                [EXHIBIT #{ev.noteId.slice(-6).toUpperCase()}]
-                              </button>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  )}
-
-                  {/* ─── TAB 2: Ranked Suspects (POI Threat Matrix) ─── */}
-                  {activeRightTab === "suspects" && (
-                    <div className="flex flex-col gap-2.5">
-                      {suspects.length === 0 ? (
-                        <div className="p-8 text-center text-xs font-mono text-on-surface-variant rounded-xl bg-surface-container-lowest border border-outline-variant/30 space-y-2">
-                          <span className="material-symbols-outlined text-[24px] text-outline block">
-                            person_search
-                          </span>
-                          <span>[NO PERSONS OF INTEREST EVALUATED]</span>
-                          <p className="text-[11px] font-sans text-on-surface-variant">
-                            Ingest incident records containing named actors to trigger the deterministic suspicion formula.
-                          </p>
-                        </div>
-                      ) : (
-                        suspects.map((s, idx) => (
-                          <div
-                            key={s.name}
-                            className="p-3.5 rounded-xl bg-surface-container-lowest border border-outline-variant/40 shadow-xs space-y-2.5 border-l-3 border-l-primary"
-                          >
-                            {/* Top Header: Rank, Name, Role & Score */}
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="font-mono text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-primary text-on-primary shrink-0">
-                                  POI #{idx + 1}
-                                </span>
-                                <span className="font-headline font-bold text-xs text-primary truncate">
-                                  {s.name}
-                                </span>
-                                <span className="font-mono text-[9px] px-1.5 py-0.2 rounded bg-surface-container text-on-surface-variant uppercase shrink-0">
-                                  {s.role}
-                                </span>
-                              </div>
-
-                              <span className="font-mono text-xs font-black text-primary px-2 py-0.5 rounded bg-secondary-fixed border border-secondary shrink-0">
-                                SCORE: {s.totalScore}
-                              </span>
-                            </div>
-
-                            {/* Alibi Verification Stamp */}
-                            <div className="flex items-center justify-between text-[10px] font-mono px-1">
-                              <span className="text-on-surface-variant uppercase">ALIBI VERIFICATION:</span>
-                              <span className={`px-2 py-0.5 rounded text-[9px] uppercase border ${getAlibiBadge(s.breakdown.alibi.status)}`}>
-                                [{s.breakdown.alibi.status.toUpperCase()}]
-                              </span>
-                            </div>
-
-                            {/* Deterministic Evidentiary Breakdown Matrix */}
-                            <div className="p-2.5 rounded-lg bg-surface-container-low text-[10px] font-mono text-on-surface-variant space-y-1 border border-outline-variant/20">
-                              <div className="font-bold text-primary uppercase text-[9px] tracking-wider flex items-center justify-between border-b border-outline-variant/20 pb-1">
-                                <span>[DETERMINISTIC FORMULA BREAKDOWN]</span>
-                                <span>WEIGHT</span>
-                              </div>
-                              <div className="flex justify-between items-center">
-                                <span>• Linked Events:</span>
-                                <span className="text-on-surface font-semibold">{s.breakdown.linkedEvents.description}</span>
-                              </div>
-                              <div className="flex justify-between items-center">
-                                <span>• Scene Proximity:</span>
-                                <span className="text-on-surface font-semibold">{s.breakdown.proximity.description}</span>
-                              </div>
-                              <div className="flex justify-between items-center">
-                                <span>• Motive / Conflict:</span>
-                                <span className="text-on-surface font-semibold">{s.breakdown.motiveOrIncrimination.description}</span>
-                              </div>
-                              <div className="flex justify-between items-center">
-                                <span>• Alibi Verification:</span>
-                                <span className="text-on-surface font-semibold">{s.breakdown.alibi.description}</span>
-                              </div>
-                            </div>
-
-                            {/* Action: Update Alibi & Entity Records */}
-                            <div className="pt-1.5 border-t border-outline-variant/20 flex justify-end">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const found = entities.find(
-                                    (e) => e.name.toLowerCase() === s.name.toLowerCase()
-                                  );
-                                  if (found) {
-                                    openEntityEditor(found);
-                                  } else {
-                                    setEditingEntity({
-                                      id: "",
-                                      name: s.name,
-                                      aliases: [],
-                                      type: "person",
-                                      role: s.role || "suspect",
-                                      alibiStatus: (s.breakdown.alibi.status as any) || "unknown",
-                                      eventIds: [],
-                                      noteIds: [],
-                                    });
-                                    setEditName(s.name);
-                                    setEditRole(s.role || "suspect");
-                                    setEditAlibiStatus(s.breakdown.alibi.status || "unknown");
-                                    setEditAlibiDetails("");
-                                    setEditAliases("");
-                                  }
-                                }}
-                                className="font-mono text-[10px] text-primary hover:text-primary-container font-bold flex items-center gap-1 cursor-pointer bg-surface-container px-2.5 py-1 rounded-md border border-outline-variant/30 hover:border-primary transition-colors"
-                              >
-                                <span className="material-symbols-outlined text-[13px]">edit_note</span>
-                                <span>UPDATE ALIBI / DOSSIER</span>
-                              </button>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  )}
-
-                  {/* ─── TAB 3: Tracked POI & Evidence Entities ─── */}
-                  {activeRightTab === "entities" && (
-                    <div className="flex flex-col gap-2.5">
-                      {entities.length === 0 ? (
-                        <div className="p-8 text-center text-xs font-mono text-on-surface-variant rounded-xl bg-surface-container-lowest border border-outline-variant/30 space-y-2">
-                          <span className="material-symbols-outlined text-[24px] text-on-surface-variant block">
-                            inventory_2
-                          </span>
-                          <span>[NO ENTITIES RECORDED]</span>
-                          <p className="text-[11px] font-sans text-on-surface-variant">
-                            Ingest incident records to track persons, locations, vehicles, and key evidence items.
-                          </p>
-                        </div>
-                      ) : (
-                        entities.map((ent) => (
-                          <div
-                            key={ent.id}
-                            className="p-3.5 rounded-xl bg-surface-container-lowest border border-outline-variant/40 shadow-xs space-y-2"
-                          >
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="font-headline font-bold text-xs text-primary truncate">
-                                  {ent.name}
-                                </span>
-                                <span className="font-mono text-[9px] px-1.5 py-0.2 rounded bg-surface-container text-on-surface-variant uppercase shrink-0">
-                                  {ent.type} / {ent.role}
-                                </span>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => openEntityEditor(ent)}
-                                className="font-mono text-[10px] font-bold text-primary hover:underline flex items-center gap-0.5 cursor-pointer"
-                              >
-                                <span className="material-symbols-outlined text-[12px]">edit</span>
-                                <span>EDIT</span>
-                              </button>
-                            </div>
-
-                            {ent.aliases && ent.aliases.length > 0 && (
-                              <div className="flex flex-wrap items-center gap-1 text-[10px] font-mono text-on-surface-variant">
-                                <span className="text-[9px] text-outline">AKA:</span>
-                                {ent.aliases.map((a, aIdx) => (
-                                  <span
-                                    key={aIdx}
-                                    className="px-1.5 py-0.2 rounded bg-surface-container-low border border-outline-variant/20 text-on-surface"
-                                  >
-                                    {a}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-
-                            {ent.type === "person" && (
-                              <div className="flex items-center justify-between text-[10px] font-mono pt-1 border-t border-outline-variant/20">
-                                <span className="text-on-surface-variant uppercase">ALIBI STATUS:</span>
-                                <span className={`px-2 py-0.5 rounded text-[9px] uppercase border ${getAlibiBadge(ent.alibiStatus || "unknown")}`}>
-                                  [{ent.alibiStatus || "unknown"}]
-                                </span>
-                              </div>
-                            )}
-
-                            {ent.alibiDetails && (
-                              <p className="text-[11px] font-sans text-on-surface-variant bg-surface-container-low p-2 rounded-lg border border-outline-variant/20 leading-snug">
-                                {ent.alibiDetails}
-                              </p>
-                            )}
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  )}
-
-                  {/* ─── TAB 4: Evidentiary Gaps & Discrepancies ─── */}
-                  {activeRightTab === "gaps" && (
-                    <div className="flex flex-col gap-2.5">
-                      {gaps.length === 0 ? (
-                        <div className="p-8 text-center text-xs font-mono text-on-surface-variant rounded-xl bg-surface-container-lowest border border-outline-variant/30 space-y-2">
-                          <span className="material-symbols-outlined text-[24px] text-emerald-600 block">
-                            verified_user
-                          </span>
-                          <span>[CHAIN OF CUSTODY INTACT]</span>
-                          <p className="text-[11px] font-sans text-on-surface-variant">
-                            No evidentiary gaps, alibi contradictions, or missing time windows detected.
-                          </p>
-                        </div>
-                      ) : (
-                        gaps.map((g, idx) => (
-                          <div
-                            key={`gap-${idx}`}
-                            className="p-3.5 rounded-xl bg-surface-container-lowest border border-error/30 shadow-xs space-y-1.5 border-l-3 border-l-error"
-                          >
-                            <div className="flex items-center gap-1.5 text-error font-mono text-[10px] uppercase font-bold">
-                              <span className="material-symbols-outlined text-[15px]">warning</span>
-                              <span>[DISCREPANCY DETECTED: {g.type.replace(/_/g, " ")}]</span>
-                            </div>
-                            <p className="text-xs text-on-surface font-medium leading-relaxed font-sans select-text">
-                              {g.description}
-                            </p>
-                            {g.noteId && (
-                              <div className="pt-1 border-t border-outline-variant/20 flex justify-end">
-                                <button
-                                  onClick={() => setSelectedNoteId(g.noteId!)}
-                                  className="font-mono text-[10px] text-secondary font-bold hover:underline cursor-pointer flex items-center gap-1"
-                                >
-                                  <span>INSPECT NOTE #{g.noteId.slice(-6).toUpperCase()}</span>
-                                  <span className="material-symbols-outlined text-[12px]">arrow_forward</span>
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  )}
-                </div>
-              </section>
+          {/* Messages Stream (Independent Scroll) */}
+          <div className="flex-1 min-h-0 overflow-y-auto px-4 lg:px-6 py-4 space-y-4">
+            {/* Top Security Header Marker */}
+            <div className="flex items-center justify-center gap-2 py-1">
+              <div className="h-px bg-outline-variant/30 flex-1" />
+              <span className="font-mono text-[9px] text-on-surface-variant uppercase tracking-widest px-2.5 py-0.5 rounded border border-outline-variant/30 bg-surface-container-low">
+                EVIDENTIARY AUDIT LOG • SESSION ENCRYPTED
+              </span>
+              <div className="h-px bg-outline-variant/30 flex-1" />
             </div>
 
-            {/* ─────────────────────────────────────────────────────────────
-          3. ENTITY & ALIBI QUICK EDITOR MODAL
-      ────────────────────────────────────────────────────────────── */}
-            {editingEntity && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-scrim/60 backdrop-blur-xs animate-fadeIn">
-                <div className="w-full max-w-md bg-surface-container-lowest rounded-2xl border border-outline-variant/40 shadow-xl p-5 space-y-4">
-                  <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-primary text-[20px]">
-                        badge
-                      </span>
-                      <h3 className="font-headline font-bold text-sm text-primary">
-                        Update Person of Interest / Entity Record
-                      </h3>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setEditingEntity(null)}
-                      className="p-1 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">close</span>
-                    </button>
-                  </div>
-
-                  <form onSubmit={handleSaveEntity} className="space-y-3.5">
-                    <div className="space-y-1">
-                      <label className="font-mono text-xs font-bold text-on-surface">Entity Name (Correct Typos)</label>
-                      <input
-                        type="text"
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                        required
-                        placeholder="e.g. Vikram Malhotra"
-                        className="w-full bg-surface-container-low border border-outline-variant/40 rounded-xl px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary font-sans"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <label className="font-mono text-xs font-bold text-on-surface">Role</label>
-                        <select
-                          value={editRole}
-                          onChange={(e) => setEditRole(e.target.value)}
-                          className="w-full bg-surface-container-low border border-outline-variant/40 rounded-xl px-2.5 py-2 text-xs text-on-surface focus:outline-none focus:border-primary font-mono"
-                        >
-                          <option value="suspect">Suspect</option>
-                          <option value="witness">Witness</option>
-                          <option value="victim">Victim</option>
-                          <option value="other">Other</option>
-                        </select>
-                      </div>
-
-                      <div className="space-y-1">
-                        <label className="font-mono text-xs font-bold text-on-surface">Alibi Status</label>
-                        <select
-                          value={editAlibiStatus}
-                          onChange={(e) => setEditAlibiStatus(e.target.value)}
-                          className="w-full bg-surface-container-low border border-outline-variant/40 rounded-xl px-2.5 py-2 text-xs text-on-surface focus:outline-none focus:border-primary font-mono font-bold"
-                        >
-                          <option value="unknown">Unknown</option>
-                          <option value="claimed">Claimed (Unverified)</option>
-                          <option value="verified">Verified (Corroborated)</option>
-                          <option value="broken">Broken (Contradicted)</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="font-mono text-xs font-bold text-on-surface">Alibi Details / Evidence Discrepancy</label>
-                      <textarea
-                        rows={2}
-                        value={editAlibiDetails}
-                        onChange={(e) => setEditAlibiDetails(e.target.value)}
-                        placeholder="e.g. CCTV footage refutes his claimed presence; toll tag records him at BKC at 11:42 PM"
-                        className="w-full bg-surface-container-low border border-outline-variant/40 rounded-xl px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary font-sans resize-none"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="font-mono text-xs font-bold text-on-surface">Aliases & Monikers (comma separated)</label>
-                      <input
-                        type="text"
-                        value={editAliases}
-                        onChange={(e) => setEditAliases(e.target.value)}
-                        placeholder="e.g. Vicky, Bunty, DL-10-CB-3190"
-                        className="w-full bg-surface-container-low border border-outline-variant/40 rounded-xl px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary font-sans"
-                      />
-                    </div>
-
-                    <div className="flex justify-end gap-2 pt-2 border-t border-outline-variant/20">
-                      <button
-                        type="button"
-                        onClick={() => setEditingEntity(null)}
-                        className="px-4 py-2 font-mono text-xs text-on-surface-variant hover:text-on-surface font-semibold"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={savingEntity}
-                        className="px-5 py-2 rounded-full bg-primary hover:bg-primary-container text-on-primary font-mono text-xs font-bold disabled:opacity-50 shadow-sm cursor-pointer"
-                      >
-                        {savingEntity ? "Saving..." : "Save to Database"}
-                      </button>
-                    </div>
-                  </form>
+            {messages.length === 0 ? (
+              <div className="p-8 rounded-2xl bg-surface-container-low border border-outline-variant/30 text-center space-y-3 my-8">
+                <div className="w-10 h-10 mx-auto rounded-xl bg-primary text-on-primary flex items-center justify-center shadow-xs">
+                  <span className="material-symbols-outlined text-[20px]">fingerprint</span>
                 </div>
+                <div className="space-y-1">
+                  <h3 className="font-mono font-bold text-xs uppercase tracking-wider text-primary">
+                    [EVIDENTIARY STREAM INITIALIZED]
+                  </h3>
+                  <p className="font-sans text-xs text-on-surface-variant max-w-md mx-auto leading-relaxed">
+                    {isViewer
+                      ? "Viewer role active: Ask evidentiary questions about timeline events, suspects, or missing leads."
+                      : "Type raw case notes to extract chronological events and entities, or ask investigative questions with source citations."}
+                  </p>
+                </div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container font-mono text-[10px] text-secondary font-semibold">
+                  <span className="material-symbols-outlined text-[13px]">bolt</span>
+                  Dual-Pipeline Active: Auto-detects notes vs. queries
+                </div>
+              </div>
+            ) : (
+              messages.map((m) => (
+                <div key={m.id} className="w-full">
+                  {m.sender === "user" ? (
+                    /* User Prompt: Classified Officer Log */
+                    <div className="flex flex-col items-end gap-1 max-w-xl ml-auto w-full">
+                      <div className="flex items-center gap-2 px-1">
+                        <span className="font-mono text-[10px] font-bold text-secondary tracking-wider uppercase">
+                          [{m.userRole?.toUpperCase() || "INVESTIGATOR"}] • {m.userName || user?.name || "OFFICER"}
+                        </span>
+                        <span className="font-mono text-[9px] text-outline">
+                          {new Date(m.timestamp).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            second: "2-digit",
+                          })}
+                        </span>
+                      </div>
+                      <div className="p-3.5 bg-surface-container-high rounded-2xl rounded-tr-xs text-primary shadow-xs border-l-2 border-secondary border-t border-r border-b border-outline-variant/30 w-full">
+                        <p className="text-xs font-medium leading-relaxed select-text whitespace-pre-wrap">
+                          {m.text}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Agent Response: Classified Forensic Memory Core */
+                    <div className="flex flex-col gap-2 max-w-2xl w-full">
+                      {/* Meta Header */}
+                      <div className="flex items-center justify-between px-1">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-md bg-primary text-on-primary flex items-center justify-center shadow-xs">
+                            <span className="material-symbols-outlined text-[14px]">psychology</span>
+                          </div>
+                          <span className="font-mono font-bold text-xs text-primary uppercase tracking-wide">
+                            CaseMemory Core
+                          </span>
+                          <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant border border-outline-variant/30">
+                            GEMINI FLASH • VECTORS
+                          </span>
+                        </div>
+
+                        {/* Mode Stamp */}
+                        {m.type === "fact" && (
+                          <span className="font-mono text-[9px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold uppercase">
+                            ✓ FACT INGESTED
+                          </span>
+                        )}
+                        {m.type === "question" && (
+                          <span className="font-mono text-[9px] px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container border border-secondary/30 font-bold uppercase">
+                            🔍 MEMORY RETRIEVAL
+                          </span>
+                        )}
+                        {m.type === "both" && (
+                          <span className="font-mono text-[9px] px-2 py-0.5 rounded bg-secondary-fixed text-on-secondary-fixed border border-secondary font-bold uppercase">
+                            ⚡ INGEST + RETRIEVAL
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Response Dossier Card */}
+                      <div className="bg-surface-container-lowest rounded-2xl p-4 shadow-subtle border border-outline-variant/40 space-y-2.5">
+                        {/* Exhibit intake confirmation badge */}
+                        {m.noteId && (
+                          <div className="p-2.5 bg-surface-container-low rounded-xl flex items-center justify-between border border-outline-variant/30">
+                            <div className="flex items-center gap-2">
+                              <span className="material-symbols-outlined text-secondary text-[16px]">
+                                policy
+                              </span>
+                              <span className="font-mono text-[11px] font-bold text-primary">
+                                EXHIBIT RECORD ARCHIVED [NOTE #{m.noteId.slice(-6).toUpperCase()}]
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedNoteId(m.noteId!)}
+                              className="font-mono text-[10px] font-bold text-secondary hover:underline cursor-pointer uppercase flex items-center gap-0.5"
+                            >
+                              <span>INSPECT</span>
+                              <span className="material-symbols-outlined text-[13px]">open_in_new</span>
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Formatted Evidentiary Text with Clickable Citations */}
+                        <div className="text-xs text-on-surface leading-relaxed select-text font-sans">
+                          <FormattedEvidentiaryText
+                            text={m.text}
+                            onSelectNote={(nId) => setSelectedNoteId(nId)}
+                          />
+                        </div>
+
+                        {/* Interactive Discrepancies Alert & Confirmation Card */}
+                        {m.discrepancies && m.discrepancies.length > 0 && (
+                          <div className="p-3 rounded-xl bg-error/10 border border-error/30 space-y-2">
+                            <div className="flex items-center gap-1.5 text-error font-mono text-[10px] font-bold uppercase">
+                              <span className="material-symbols-outlined text-[15px]">notification_important</span>
+                              <span>[POTENTIAL CONTRADICTION / DISCREPANCY DETECTED]</span>
+                            </div>
+                            {m.discrepancies.map((d, dIdx) => (
+                              <div key={dIdx} className="text-xs space-y-1.5 p-2 rounded-lg bg-surface-container-lowest/80 border border-error/20">
+                                <p className="font-sans text-xs text-on-surface">
+                                  {d.description}
+                                </p>
+                                <div className="flex flex-wrap items-center gap-2 pt-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleConfirmDiscrepancy(d)}
+                                    className="px-2.5 py-1 rounded-md bg-primary hover:bg-primary-container text-on-primary font-mono text-[10px] font-bold cursor-pointer"
+                                  >
+                                    Confirm &amp; Update Record
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Citations / Source Provenance Footer */}
+                        {m.citations && m.citations.length > 0 && (
+                          <div className="pt-2 border-t border-outline-variant/20 flex flex-wrap items-center gap-1.5">
+                            <span className="font-mono text-[9px] uppercase font-bold text-on-surface-variant tracking-wider mr-1">
+                              [EXHIBIT PROVENANCE]:
+                            </span>
+                            {m.citations.map((c) => (
+                              <button
+                                key={c.noteId}
+                                onClick={() => setSelectedNoteId(c.noteId)}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container hover:bg-surface-container-high text-primary font-mono text-[10px] font-bold border border-outline-variant/40 transition-colors cursor-pointer"
+                              >
+                                <span className="material-symbols-outlined text-[12px] text-secondary">
+                                  description
+                                </span>
+                                <span>EXHIBIT #{c.noteId.slice(-6).toUpperCase()}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+
+            {submitting && (
+              <div className="flex items-center gap-2.5 p-3 rounded-xl bg-surface-container-low border border-outline-variant/30 text-xs text-on-surface-variant font-mono">
+                <span className="material-symbols-outlined text-[16px] text-secondary animate-spin">
+                  sync
+                </span>
+                <span className="text-[11px] tracking-wide">
+                  [ROUTING INTENT // SYNCHRONIZING VECTOR STORE...]
+                </span>
               </div>
             )}
 
-            {/* ─────────────────────────────────────────────────────────────
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* ─────────────────────────────────────────────────────────
+              Chat Input Area (Docked strictly at bottom of Chat Section)
+          ────────────────────────────────────────────────────────── */}
+          <div className="shrink-0 p-3 lg:p-4 bg-surface-container-low/95 border-t border-outline-variant/30">
+            <form
+              onSubmit={handleSendMessage}
+              className="bg-surface-container-lowest rounded-xl border border-outline-variant/40 shadow-xs p-2 flex flex-col gap-1.5 focus-within:border-secondary transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-secondary text-[18px] ml-1 shrink-0">
+                  {isViewer ? "lock" : "rate_review"}
+                </span>
+
+                <input
+                  type="text"
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  placeholder={
+                    isViewer
+                      ? "Viewer Query: 'Who has a broken alibi?' / 'Summary of 30th October'..."
+                      : "Type incident notes or query memory: 'Suspect observed leaving via Gate 2'..."
+                  }
+                  disabled={submitting}
+                  className="flex-1 bg-transparent border-0 outline-none text-on-surface placeholder:text-on-surface-variant/70 font-sans text-xs py-1"
+                />
+
+                <button
+                  type="submit"
+                  disabled={submitting || !inputText.trim()}
+                  className="w-8 h-8 rounded-lg bg-primary hover:bg-primary-container text-on-primary flex items-center justify-center transition-all shadow-xs shrink-0 disabled:opacity-40 cursor-pointer"
+                  title="Dispatch message to memory pipeline"
+                >
+                  <span className="material-symbols-outlined text-[16px]">arrow_upward</span>
+                </button>
+              </div>
+
+              {/* Sub-bar Classification Label */}
+              <div className="flex items-center justify-between px-1.5 pt-1 border-t border-outline-variant/20 font-mono text-[9px] text-on-surface-variant">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-secondary" />
+                  <span className="tracking-wide">
+                    {isViewer
+                      ? "ACCESS: READ-ONLY MEMORY RETRIEVAL"
+                      : "DUAL-PIPELINE: NOTE EXTRACTION & QUERY ENGINE"}
+                  </span>
+                </div>
+                <div className="hidden sm:flex items-center gap-1 text-outline">
+                  <span>DISPATCH:</span>
+                  <kbd className="px-1 py-0.2 rounded bg-surface-container font-bold text-[8px]">
+                    ENTER ↵
+                  </kbd>
+                </div>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        /* ═════════════════════════════════════════════════════════════
+            ADJUSTABLE RESIZE DIVIDER (Desktop only)
+        ══════════════════════════════════════════════════════════════ */}
+        <div
+          role="separator"
+          tabIndex={0}
+          aria-orientation="vertical"
+          aria-label="Adjust panel split"
+          onPointerDown={(e) => {
+            e.preventDefault();
+            setIsDragging(true);
+          }}
+          onDoubleClick={() => setSplitRatio(55)}
+          onKeyDown={handleSplitterKeyDown}
+          className={`hidden lg:flex items-center justify-center relative w-1.5 shrink-0 cursor-col-resize select-none z-30 group outline-none transition-colors ${isDragging
+            ? "bg-secondary"
+            : "bg-outline-variant/30 hover:bg-secondary/70"
+            }`}
+          title="Drag to resize panels • Double-click to reset"
+        >
+          {/* Subtle minimal grab notch */}
+          <div
+            className={`w-0.5 h-7 rounded-full transition-colors ${isDragging
+              ? "bg-secondary-fixed"
+              : "bg-outline-variant/60 group-hover:bg-secondary"
+              }`}
+          />
+        </div>
+
+        {/* ═════════════════════════════════════════════════════════════
+            SECTION 2: CLASSIFIED TIMELINES & INTELLIGENCE DOSSIER
+        ══════════════════════════════════════════════════════════════ */}
+        <section
+          style={mounted && isLgScreen ? { flex: "1 1 0%", minWidth: 0 } : undefined}
+          className={`w-full flex-1 flex flex-col h-full min-h-0 overflow-hidden bg-surface-container-lowest/50 ${isDragging ? "pointer-events-none select-none" : ""
+            } ${mobileTab === "timeline" ? "flex" : "hidden lg:flex"
+            }`}
+        >
+          {/* Section 2 Header & Classified Tabs */}
+          <div className="shrink-0 px-4 py-2.5 border-b border-outline-variant/30 bg-surface-container-low/70 flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="font-mono text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-secondary text-on-primary tracking-wider shrink-0">
+                  SEC-02
+                </span>
+                <div className="min-w-0">
+                  <h2 className="font-headline font-bold text-xs text-primary uppercase tracking-wider truncate">
+                    Evidentiary Matrix &amp; Timeline
+                  </h2>
+                  <span className="font-mono text-[9px] text-on-surface-variant block truncate">
+                    CHRONOLOGICAL DOSSIER // SYNCHRONIZED
+                  </span>
+                </div>
+              </div>
+
+              <span className="font-mono text-[9px] px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-bold border border-outline-variant/30 shrink-0">
+                TOTAL TRACES: {events.length + suspects.length + gaps.length}
+              </span>
+            </div>
+
+            {/* Classified Tab Strip */}
+            <div className="flex items-center p-1 rounded-lg bg-surface-container border border-outline-variant/30 gap-1">
+              <button
+                onClick={() => setActiveRightTab("timeline")}
+                className={`flex-1 py-1 px-2 rounded font-mono text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${activeRightTab === "timeline"
+                  ? "bg-primary text-on-primary shadow-xs"
+                  : "text-on-surface-variant hover:bg-surface-container-high"
+                  }`}
+              >
+                <span className="material-symbols-outlined text-[14px]">schedule</span>
+                <span>TIMELINE ({events.length})</span>
+              </button>
+
+              <button
+                onClick={() => setActiveRightTab("suspects")}
+                className={`flex-1 py-1 px-2 rounded font-mono text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${activeRightTab === "suspects"
+                  ? "bg-primary text-on-primary shadow-xs"
+                  : "text-on-surface-variant hover:bg-surface-container-high"
+                  }`}
+              >
+                <span className="material-symbols-outlined text-[14px]">person_alert</span>
+                <span>SUSPECTS ({suspects.length})</span>
+              </button>
+
+              <button
+                onClick={() => setActiveRightTab("entities")}
+                className={`flex-1 py-1 px-2 rounded font-mono text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${activeRightTab === "entities"
+                  ? "bg-primary text-on-primary shadow-xs"
+                  : "text-on-surface-variant hover:bg-surface-container-high"
+                  }`}
+              >
+                <span className="material-symbols-outlined text-[14px]">badge</span>
+                <span>ENTITIES ({entities.length})</span>
+              </button>
+
+              <button
+                onClick={() => setActiveRightTab("gaps")}
+                className={`flex-1 py-1 px-2 rounded font-mono text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${activeRightTab === "gaps"
+                  ? "bg-primary text-on-primary shadow-xs"
+                  : "text-on-surface-variant hover:bg-surface-container-high"
+                  }`}
+              >
+                <span className="material-symbols-outlined text-[14px]">warning</span>
+                <span>GAPS ({gaps.length})</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Timelines Stream (Independent Scroll) */}
+          <div className="flex-1 min-h-0 overflow-y-auto px-4 lg:px-5 py-4 space-y-3">
+            {/* ─── TAB 1: Chronological Timeline ─── */}
+            {activeRightTab === "timeline" && (
+              <div className="flex flex-col gap-2.5">
+                {events.length === 0 ? (
+                  <div className="p-8 text-center text-xs font-mono text-on-surface-variant rounded-xl bg-surface-container-lowest border border-outline-variant/30 space-y-2">
+                    <span className="material-symbols-outlined text-[24px] text-outline block">
+                      event_busy
+                    </span>
+                    <span>[NO CHRONOLOGICAL EVENTS RECORDED YET]</span>
+                    <p className="text-[11px] font-sans text-on-surface-variant">
+                      Ingest witness notes or case reports to build the chronological chain of custody.
+                    </p>
+                  </div>
+                ) : (
+                  events.map((ev, idx) => (
+                    <div
+                      key={ev.id}
+                      className="p-3 rounded-xl bg-surface-container-lowest border border-outline-variant/30 shadow-xs space-y-2 group hover:border-secondary transition-colors relative border-l-3 border-l-secondary"
+                    >
+                      {/* Top Bar: Time & Location */}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="font-mono text-[9px] font-bold px-1.5 py-0.2 rounded bg-surface-container text-secondary shrink-0">
+                            #{String(idx + 1).padStart(2, "0")}
+                          </span>
+                          <span className="font-mono text-[11px] font-bold text-primary truncate">
+                            {ev.whenText || "TIME UNSPECIFIED"}
+                          </span>
+                        </div>
+
+                        {ev.where && (
+                          <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-bold shrink-0 border border-outline-variant/20 flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[11px]">location_on</span>
+                            <span className="truncate max-w-[130px]">{ev.where}</span>
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Event Description */}
+                      <p className="text-xs text-on-surface font-medium leading-relaxed select-text font-sans">
+                        {ev.what}
+                      </p>
+
+                      {/* Bottom Bar: Involved Actors & Source Exhibit */}
+                      <div className="flex items-center justify-between pt-1.5 border-t border-outline-variant/20 gap-2">
+                        <div className="flex flex-wrap gap-1">
+                          {ev.who && ev.who.length > 0 ? (
+                            ev.who.map((w) => (
+                              <span
+                                key={w}
+                                className="font-mono text-[9px] px-1.5 py-0.2 rounded bg-surface-container text-secondary font-semibold"
+                              >
+                                @{w}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="font-mono text-[9px] text-outline">NO ACTORS IDENTIFIED</span>
+                          )}
+                        </div>
+
+                        <button
+                          onClick={() => setSelectedNoteId(ev.noteId)}
+                          className="font-mono text-[10px] text-secondary font-bold hover:underline cursor-pointer shrink-0"
+                          title="Inspect original source note"
+                        >
+                          [EXHIBIT #{ev.noteId.slice(-6).toUpperCase()}]
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* ─── TAB 2: Ranked Suspects (POI Threat Matrix) ─── */}
+            {activeRightTab === "suspects" && (
+              <div className="flex flex-col gap-2.5">
+                {suspects.length === 0 ? (
+                  <div className="p-8 text-center text-xs font-mono text-on-surface-variant rounded-xl bg-surface-container-lowest border border-outline-variant/30 space-y-2">
+                    <span className="material-symbols-outlined text-[24px] text-outline block">
+                      person_search
+                    </span>
+                    <span>[NO PERSONS OF INTEREST EVALUATED]</span>
+                    <p className="text-[11px] font-sans text-on-surface-variant">
+                      Ingest incident records containing named actors to trigger the deterministic suspicion formula.
+                    </p>
+                  </div>
+                ) : (
+                  suspects.map((s, idx) => (
+                    <div
+                      key={s.name}
+                      className="p-3.5 rounded-xl bg-surface-container-lowest border border-outline-variant/40 shadow-xs space-y-2.5 border-l-3 border-l-primary"
+                    >
+                      {/* Top Header: Rank, Name, Role & Score */}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="font-mono text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-primary text-on-primary shrink-0">
+                            POI #{idx + 1}
+                          </span>
+                          <span className="font-headline font-bold text-xs text-primary truncate">
+                            {s.name}
+                          </span>
+                          <span className="font-mono text-[9px] px-1.5 py-0.2 rounded bg-surface-container text-on-surface-variant uppercase shrink-0">
+                            {s.role}
+                          </span>
+                        </div>
+
+                        <span className="font-mono text-xs font-black text-primary px-2 py-0.5 rounded bg-secondary-fixed border border-secondary shrink-0">
+                          SCORE: {s.totalScore}
+                        </span>
+                      </div>
+
+                      {/* Alibi Verification Stamp */}
+                      <div className="flex items-center justify-between text-[10px] font-mono px-1">
+                        <span className="text-on-surface-variant uppercase">ALIBI VERIFICATION:</span>
+                        <span className={`px-2 py-0.5 rounded text-[9px] uppercase border ${getAlibiBadge(s.breakdown.alibi.status)}`}>
+                          [{s.breakdown.alibi.status.toUpperCase()}]
+                        </span>
+                      </div>
+
+                      {/* Deterministic Evidentiary Breakdown Matrix */}
+                      <div className="p-2.5 rounded-lg bg-surface-container-low text-[10px] font-mono text-on-surface-variant space-y-1 border border-outline-variant/20">
+                        <div className="font-bold text-primary uppercase text-[9px] tracking-wider flex items-center justify-between border-b border-outline-variant/20 pb-1">
+                          <span>[DETERMINISTIC FORMULA BREAKDOWN]</span>
+                          <span>WEIGHT</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span>• Linked Events:</span>
+                          <span className="text-on-surface font-semibold">{s.breakdown.linkedEvents.description}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span>• Scene Proximity:</span>
+                          <span className="text-on-surface font-semibold">{s.breakdown.proximity.description}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span>• Motive / Conflict:</span>
+                          <span className="text-on-surface font-semibold">{s.breakdown.motiveOrIncrimination.description}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span>• Alibi Verification:</span>
+                          <span className="text-on-surface font-semibold">{s.breakdown.alibi.description}</span>
+                        </div>
+                      </div>
+
+                      {/* Action: Update Alibi & Entity Records */}
+                      <div className="pt-1.5 border-t border-outline-variant/20 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const found = entities.find(
+                              (e) => e.name.toLowerCase() === s.name.toLowerCase()
+                            );
+                            if (found) {
+                              openEntityEditor(found);
+                            } else {
+                              setEditingEntity({
+                                id: "",
+                                name: s.name,
+                                aliases: [],
+                                type: "person",
+                                role: s.role || "suspect",
+                                alibiStatus: (s.breakdown.alibi.status as any) || "unknown",
+                                eventIds: [],
+                                noteIds: [],
+                              });
+                              setEditName(s.name);
+                              setEditRole(s.role || "suspect");
+                              setEditAlibiStatus(s.breakdown.alibi.status || "unknown");
+                              setEditAlibiDetails("");
+                              setEditAliases("");
+                            }
+                          }}
+                          className="font-mono text-[10px] text-primary hover:text-primary-container font-bold flex items-center gap-1 cursor-pointer bg-surface-container px-2.5 py-1 rounded-md border border-outline-variant/30 hover:border-primary transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[13px]">edit_note</span>
+                          <span>UPDATE ALIBI / DOSSIER</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* ─── TAB 3: Tracked POI & Evidence Entities ─── */}
+            {activeRightTab === "entities" && (
+              <div className="flex flex-col gap-2.5">
+                {entities.length === 0 ? (
+                  <div className="p-8 text-center text-xs font-mono text-on-surface-variant rounded-xl bg-surface-container-lowest border border-outline-variant/30 space-y-2">
+                    <span className="material-symbols-outlined text-[24px] text-on-surface-variant block">
+                      inventory_2
+                    </span>
+                    <span>[NO ENTITIES RECORDED]</span>
+                    <p className="text-[11px] font-sans text-on-surface-variant">
+                      Ingest incident records to track persons, locations, vehicles, and key evidence items.
+                    </p>
+                  </div>
+                ) : (
+                  entities.map((ent) => (
+                    <div
+                      key={ent.id}
+                      className="p-3.5 rounded-xl bg-surface-container-lowest border border-outline-variant/40 shadow-xs space-y-2"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="font-headline font-bold text-xs text-primary truncate">
+                            {ent.name}
+                          </span>
+                          <span className="font-mono text-[9px] px-1.5 py-0.2 rounded bg-surface-container text-on-surface-variant uppercase shrink-0">
+                            {ent.type} / {ent.role}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => openEntityEditor(ent)}
+                          className="font-mono text-[10px] font-bold text-primary hover:underline flex items-center gap-0.5 cursor-pointer"
+                        >
+                          <span className="material-symbols-outlined text-[12px]">edit</span>
+                          <span>EDIT</span>
+                        </button>
+                      </div>
+
+                      {ent.aliases && ent.aliases.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-1 text-[10px] font-mono text-on-surface-variant">
+                          <span className="text-[9px] text-outline">AKA:</span>
+                          {ent.aliases.map((a, aIdx) => (
+                            <span
+                              key={aIdx}
+                              className="px-1.5 py-0.2 rounded bg-surface-container-low border border-outline-variant/20 text-on-surface"
+                            >
+                              {a}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {ent.type === "person" && (
+                        <div className="flex items-center justify-between text-[10px] font-mono pt-1 border-t border-outline-variant/20">
+                          <span className="text-on-surface-variant uppercase">ALIBI STATUS:</span>
+                          <span className={`px-2 py-0.5 rounded text-[9px] uppercase border ${getAlibiBadge(ent.alibiStatus || "unknown")}`}>
+                            [{ent.alibiStatus || "unknown"}]
+                          </span>
+                        </div>
+                      )}
+
+                      {ent.alibiDetails && (
+                        <p className="text-[11px] font-sans text-on-surface-variant bg-surface-container-low p-2 rounded-lg border border-outline-variant/20 leading-snug">
+                          {ent.alibiDetails}
+                        </p>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* ─── TAB 4: Evidentiary Gaps & Discrepancies ─── */}
+            {activeRightTab === "gaps" && (
+              <div className="flex flex-col gap-2.5">
+                {gaps.length === 0 ? (
+                  <div className="p-8 text-center text-xs font-mono text-on-surface-variant rounded-xl bg-surface-container-lowest border border-outline-variant/30 space-y-2">
+                    <span className="material-symbols-outlined text-[24px] text-emerald-600 block">
+                      verified_user
+                    </span>
+                    <span>[CHAIN OF CUSTODY INTACT]</span>
+                    <p className="text-[11px] font-sans text-on-surface-variant">
+                      No evidentiary gaps, alibi contradictions, or missing time windows detected.
+                    </p>
+                  </div>
+                ) : (
+                  gaps.map((g, idx) => (
+                    <div
+                      key={`gap-${idx}`}
+                      className="p-3.5 rounded-xl bg-surface-container-lowest border border-error/30 shadow-xs space-y-1.5 border-l-3 border-l-error"
+                    >
+                      <div className="flex items-center gap-1.5 text-error font-mono text-[10px] uppercase font-bold">
+                        <span className="material-symbols-outlined text-[15px]">warning</span>
+                        <span>[DISCREPANCY DETECTED: {g.type.replace(/_/g, " ")}]</span>
+                      </div>
+                      <p className="text-xs text-on-surface font-medium leading-relaxed font-sans select-text">
+                        {g.description}
+                      </p>
+                      {g.noteId && (
+                        <div className="pt-1 border-t border-outline-variant/20 flex justify-end">
+                          <button
+                            onClick={() => setSelectedNoteId(g.noteId!)}
+                            className="font-mono text-[10px] text-secondary font-bold hover:underline cursor-pointer flex items-center gap-1"
+                          >
+                            <span>INSPECT NOTE #{g.noteId.slice(-6).toUpperCase()}</span>
+                            <span className="material-symbols-outlined text-[12px]">arrow_forward</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+
+      {/* ─────────────────────────────────────────────────────────────
+          3. ENTITY & ALIBI QUICK EDITOR MODAL
+      ────────────────────────────────────────────────────────────── */}
+      {editingEntity && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="w-full max-w-md bg-surface-container-lowest rounded-2xl border border-outline-variant/40 shadow-xl p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary text-[20px]">
+                  badge
+                </span>
+                <h3 className="font-headline font-bold text-sm text-primary">
+                  Update Person of Interest / Entity Record
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingEntity(null)}
+                className="p-1 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEntity} className="space-y-3.5">
+              <div className="space-y-1">
+                <label className="font-mono text-xs font-bold text-on-surface">Entity Name (Correct Typos)</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  required
+                  placeholder="e.g. Vikram Malhotra"
+                  className="w-full bg-surface-container-low border border-outline-variant/40 rounded-xl px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary font-sans"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-mono text-xs font-bold text-on-surface">Role</label>
+                  <select
+                    value={editRole}
+                    onChange={(e) => setEditRole(e.target.value)}
+                    className="w-full bg-surface-container-low border border-outline-variant/40 rounded-xl px-2.5 py-2 text-xs text-on-surface focus:outline-none focus:border-primary font-mono"
+                  >
+                    <option value="suspect">Suspect</option>
+                    <option value="witness">Witness</option>
+                    <option value="victim">Victim</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-mono text-xs font-bold text-on-surface">Alibi Status</label>
+                  <select
+                    value={editAlibiStatus}
+                    onChange={(e) => setEditAlibiStatus(e.target.value)}
+                    className="w-full bg-surface-container-low border border-outline-variant/40 rounded-xl px-2.5 py-2 text-xs text-on-surface focus:outline-none focus:border-primary font-mono font-bold"
+                  >
+                    <option value="unknown">Unknown</option>
+                    <option value="claimed">Claimed (Unverified)</option>
+                    <option value="verified">Verified (Corroborated)</option>
+                    <option value="broken">Broken (Contradicted)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-mono text-xs font-bold text-on-surface">Alibi Details / Evidence Discrepancy</label>
+                <textarea
+                  rows={2}
+                  value={editAlibiDetails}
+                  onChange={(e) => setEditAlibiDetails(e.target.value)}
+                  placeholder="e.g. CCTV footage refutes his claimed presence; toll tag records him at BKC at 11:42 PM"
+                  className="w-full bg-surface-container-low border border-outline-variant/40 rounded-xl px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary font-sans resize-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-mono text-xs font-bold text-on-surface">Aliases & Monikers (comma separated)</label>
+                <input
+                  type="text"
+                  value={editAliases}
+                  onChange={(e) => setEditAliases(e.target.value)}
+                  placeholder="e.g. Vicky, Bunty, DL-10-CB-3190"
+                  className="w-full bg-surface-container-low border border-outline-variant/40 rounded-xl px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary font-sans"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-outline-variant/20">
+                <button
+                  type="button"
+                  onClick={() => setEditingEntity(null)}
+                  className="px-4 py-2 font-mono text-xs text-on-surface-variant hover:text-on-surface font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingEntity}
+                  className="px-5 py-2 rounded-full bg-primary hover:bg-primary-container text-on-primary font-mono text-xs font-bold disabled:opacity-50 shadow-sm cursor-pointer"
+                >
+                  {savingEntity ? "Saving..." : "Save to Database"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
           4. VERBATIM NOTE DRAWER & TOAST NOTIFICATIONS
       ────────────────────────────────────────────────────────────── */}
-            <NoteDrawer
-              noteId={selectedNoteId}
-              notes={notes}
-              events={events}
-              onClose={() => setSelectedNoteId(null)}
-            />
+      <NoteDrawer
+        noteId={selectedNoteId}
+        notes={notes}
+        events={events}
+        onClose={() => setSelectedNoteId(null)}
+      />
 
-            <ToastContainer
-              toasts={toasts}
-              onDismiss={(id) => setToasts((prev) => prev.filter((t) => t.id !== id))}
-            />
-          </div>
-          );
+      <ToastContainer
+        toasts={toasts}
+        onDismiss={(id) => setToasts((prev) => prev.filter((t) => t.id !== id))}
+      />
+    </div>
+  );
 }
