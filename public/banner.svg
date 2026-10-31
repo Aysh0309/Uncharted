@@ -1,0 +1,176 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 260" width="100%" height="260">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00141E" />
+      <stop offset="50%" stop-color="#001E2B" />
+      <stop offset="100%" stop-color="#021219" />
+    </linearGradient>
+
+    <!-- MongoDB Spring Green Gradient -->
+    <linearGradient id="mongoGreen" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00ED64" />
+      <stop offset="100%" stop-color="#00684A" />
+    </linearGradient>
+
+    <linearGradient id="mongoLeafDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00684A" />
+      <stop offset="100%" stop-color="#023430" />
+    </linearGradient>
+
+    <!-- Text Highlight Gradient -->
+    <linearGradient id="titleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="40%" stop-color="#FFFFFF" />
+      <stop offset="70%" stop-color="#00ED64" />
+      <stop offset="100%" stop-color="#FFFFFF" />
+    </linearGradient>
+
+    <!-- Scanning Beam Gradient -->
+    <linearGradient id="scanBeam" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="transparent" />
+      <stop offset="50%" stop-color="rgba(0, 237, 100, 0.15)" />
+      <stop offset="100%" stop-color="transparent" />
+    </linearGradient>
+
+    <!-- Glowing Filter -->
+    <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
+    </filter>
+
+    <!-- Grid Pattern -->
+    <pattern id="tacticalGrid" width="30" height="30" patternUnits="userSpaceOnUse">
+      <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(0, 237, 100, 0.04)" stroke-width="1" />
+      <circle cx="0" cy="0" r="1" fill="rgba(0, 237, 100, 0.12)" />
+    </pattern>
+
+    <style>
+      @keyframes sweepScan {
+        0% { transform: translateX(-400px); }
+        50% { transform: translateX(900px); }
+        100% { transform: translateX(900px); }
+      }
+      @keyframes pulseAura {
+        0% { opacity: 0.35; transform: scale(0.92); }
+        50% { opacity: 0.75; transform: scale(1.08); }
+        100% { opacity: 0.35; transform: scale(0.92); }
+      }
+      @keyframes radarSweep {
+        0% { stroke-dashoffset: 280; }
+        100% { stroke-dashoffset: 0; }
+      }
+      @keyframes cursorBlink {
+        0%, 49% { opacity: 1; }
+        50%, 100% { opacity: 0; }
+      }
+      .scanner-beam {
+        animation: sweepScan 5s ease-in-out infinite;
+      }
+      .aura-glow {
+        transform-origin: 105px 125px;
+        animation: pulseAura 3.6s ease-in-out infinite;
+      }
+      .cursor-flash {
+        animation: cursorBlink 0.9s infinite;
+      }
+    </style>
+  </defs>
+
+  <!-- Banner Background Card -->
+  <rect x="2" y="2" width="876" height="256" rx="20" fill="url(#bgGrad)" stroke="#00684A" stroke-width="1.5" />
+  <rect x="2" y="2" width="876" height="256" rx="20" fill="url(#tacticalGrid)" />
+
+  <!-- Animated Scanning Light Beam -->
+  <g class="scanner-beam">
+    <rect x="0" y="2" width="220" height="256" fill="url(#scanBeam)" />
+    <line x1="110" y1="2" x2="110" y2="258" stroke="rgba(0, 237, 100, 0.4)" stroke-width="1.5" />
+  </g>
+
+  <!-- Left Pulsing Ambient Glow Behind Logo -->
+  <circle cx="105" cy="125" r="75" fill="#00ED64" opacity="0.18" filter="url(#softGlow)" class="aura-glow" />
+
+  <!-- ══════════════════════════════════════════════════════
+       OFFICIAL MONGODB LEAF EMBLEM
+  ═══════════════════════════════════════════════════════ -->
+  <g id="mongoLeaf" transform="translate(48, 48) scale(1.55)">
+    <!-- Outer Shield Halo Ring -->
+    <circle cx="36" cy="50" r="44" fill="none" stroke="rgba(0, 237, 100, 0.2)" stroke-width="1" />
+    <circle cx="36" cy="50" r="44" fill="none" stroke="#00ED64" stroke-width="1.5" stroke-dasharray="70 200" stroke-linecap="round" />
+
+    <!-- MongoDB Leaf: Right Lobe (Bright Spring Green #00ED64) -->
+    <path d="M 37.5 12 C 37.5 12 36.2 16.5 35.8 19.8 C 34.6 30.5 38.6 39.8 44.5 49.2 C 50.8 59.2 57.5 69.8 54.2 80.5 C 51.5 89.2 43.8 95.2 37.5 98 C 37.5 98 37.5 91 37.5 83 C 37.5 73.5 37.2 24.2 37.5 12 Z" 
+          fill="url(#mongoGreen)" 
+          filter="url(#neonGlow)" />
+
+    <!-- MongoDB Leaf: Left Lobe (Deep Forest Green #00684A) -->
+    <path d="M 37.5 12 C 37.5 12 35.8 14.8 34.2 17.5 C 26.5 30.8 17.2 45.2 18.5 61.5 C 19.5 74.2 27.5 87.2 37.5 98 C 37.5 98 37.5 86.5 37.5 76 C 37.5 63 37.2 28.5 37.5 12 Z" 
+          fill="url(#mongoLeafDark)" />
+
+    <!-- Central Center Stem Accent -->
+    <path d="M 37.5 18 L 37.5 95" stroke="#E3FCF7" stroke-width="0.8" opacity="0.75" />
+  </g>
+
+  <!-- ══════════════════════════════════════════════════════
+       PROJECT BRANDING & TYPOGRAPHY
+  ═══════════════════════════════════════════════════════ -->
+  <g transform="translate(195, 38)">
+    <!-- Hackathon & Engine Pill -->
+    <g transform="translate(0, 0)">
+      <rect x="0" y="0" width="410" height="26" rx="6" fill="#002838" stroke="rgba(0, 237, 100, 0.4)" stroke-width="1" />
+      <circle cx="12" cy="13" r="4" fill="#00ED64" />
+      <text x="24" y="17" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#00ED64" letter-spacing="1.2">
+        MONGODB ATLAS VECTOR SEARCH
+      </text>
+      <text x="248" y="17" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" font-weight="500" fill="#A3B8CC">
+        • UNCHARTED 2026 TRACK 1
+      </text>
+    </g>
+
+    <!-- Main Title -->
+    <text x="0" y="76" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="44" font-weight="900" fill="url(#titleGrad)" letter-spacing="-0.8">
+      CaseMemory
+    </text>
+
+    <!-- Subtitle / Tagline -->
+    <text x="0" y="104" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14.5" font-weight="600" fill="#E3FCF7" letter-spacing="0.3">
+      Agentic Evidentiary Memory for Criminal Investigations
+    </text>
+
+    <!-- Animated Capabilities Command Line -->
+    <g transform="translate(0, 126)">
+      <rect x="0" y="0" width="630" height="38" rx="8" fill="#00141E" stroke="rgba(163, 184, 204, 0.2)" stroke-width="1" />
+      <text x="14" y="24" font-family="'Fira Code', 'Courier New', monospace" font-size="12" font-weight="600" fill="#00ED64">
+        &gt; ATLAS_VECTOR_SEARCH:
+      </text>
+      <text x="175" y="24" font-family="'Fira Code', 'Courier New', monospace" font-size="12" font-weight="500" fill="#FFFFFF">
+        Continuous Episodic Memory • Zero Hallucinations
+      </text>
+      <rect x="555" y="12" width="8" height="15" fill="#00ED64" class="cursor-flash" />
+    </g>
+
+    <!-- Tactical Metrics Strip -->
+    <g transform="translate(0, 180)">
+      <text x="0" y="13" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="700" fill="#A3B8CC" letter-spacing="0.8">
+        STORAGE: <tspan fill="#00ED64">MONGODB ATLAS</tspan>
+      </text>
+      <text x="180" y="13" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="700" fill="#A3B8CC" letter-spacing="0.8">
+        VECTORS: <tspan fill="#00ED64">768-DIM COSINE</tspan>
+      </text>
+      <text x="360" y="13" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="700" fill="#A3B8CC" letter-spacing="0.8">
+        CITATIONS: <tspan fill="#00ED64">100% GROUNDED</tspan>
+      </text>
+      <text x="530" y="13" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="700" fill="#A3B8CC" letter-spacing="0.8">
+        SCORES: <tspan fill="#00ED64">DETERMINISTIC</tspan>
+      </text>
+    </g>
+  </g>
+</svg>
+
