@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { name, email, password, role } = parsed.data;
+    const { name, email, password } = parsed.data;
     const cleanEmail = email.toLowerCase().trim();
 
     const db = await getDb();
@@ -36,14 +36,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Hash password and store user
+    // Hash password and store user.
+    // Roles are strictly assigned by administrators; new self-registered users default to "viewer".
     const passwordHash = await hashPassword(password);
     const now = new Date();
     const result = await usersCol.insertOne({
       name: name.trim(),
       email: cleanEmail,
       passwordHash,
-      role: role || "investigator",
+      role: "viewer",
       createdAt: now,
     });
 
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
       id: result.insertedId.toString(),
       email: cleanEmail,
       name: name.trim(),
-      role: role || "investigator",
+      role: "viewer" as const,
     };
 
     // Sign JWT and set session cookie

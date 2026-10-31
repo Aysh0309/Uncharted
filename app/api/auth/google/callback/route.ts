@@ -90,7 +90,7 @@ export async function GET(req: NextRequest) {
       const insertResult = await usersCol.insertOne({
         name: profile.name || email.split("@")[0],
         email,
-        role: "investigator", // Default operational role for Google users
+        role: "viewer", // Roles are decided by admin; default role for new Google users is viewer
         googleId: profile.sub,
         picture: profile.picture,
         createdAt: new Date(),
@@ -100,7 +100,7 @@ export async function GET(req: NextRequest) {
         _id: insertResult.insertedId,
         name: profile.name || email.split("@")[0],
         email,
-        role: "investigator",
+        role: "viewer",
         picture: profile.picture,
       };
     } else {

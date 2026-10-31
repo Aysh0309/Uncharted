@@ -45,6 +45,14 @@ function CasesContent() {
   const [newCaseDesc, setNewCaseDesc] = useState("");
   const [savingCase, setSavingCase] = useState(false);
 
+  // Admin Add User Modal
+  const [showCreateUser, setShowCreateUser] = useState(false);
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserPassword, setNewUserPassword] = useState("");
+  const [newUserRole, setNewUserRole] = useState<"investigator" | "viewer" | "admin">("investigator");
+  const [savingUser, setSavingUser] = useState(false);
+
   // Assign user from Case card
   const [assignTargetCase, setAssignTargetCase] = useState<CaseItem | null>(null);
   const [assignSelectedUser, setAssignSelectedUser] = useState("");
@@ -160,6 +168,39 @@ function CasesContent() {
       alert(err.message);
     } finally {
       setSavingCase(false);
+    }
+  };
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newUserName.trim() || !newUserEmail.trim() || !newUserPassword) return;
+
+    setSavingUser(true);
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newUserName.trim(),
+          email: newUserEmail.trim(),
+          password: newUserPassword,
+          role: newUserRole,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to create user");
+
+      setShowCreateUser(false);
+      setNewUserName("");
+      setNewUserEmail("");
+      setNewUserPassword("");
+      setNewUserRole("investigator");
+      await fetchData();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setSavingUser(false);
     }
   };
 
@@ -466,7 +507,7 @@ function CasesContent() {
       ) : (
         /* ================= 2. ADMIN USERS & INVESTIGATORS VIEW ================= */
         <div className="space-y-4">
-          {/* User Search Bar & Click hint */}
+          {/* User Search Bar & Actions */}
           <div className="flex flex-col sm:flex-row items-center gap-2">
             <div className="relative flex-1 w-full">
               <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">
@@ -488,9 +529,20 @@ function CasesContent() {
                 </button>
               )}
             </div>
-            <span className="text-[11px] text-on-surface-variant font-medium shrink-0">
-              💡 Click any user to manage role &amp; assign cases
-            </span>
+
+            <button
+              type="button"
+              onClick={() => setShowCreateUser(true)}
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-primary text-on-primary text-xs font-bold font-label flex items-center justify-center gap-1.5 shadow-xs hover:bg-primary-container transition-all cursor-pointer shrink-0"
+            >
+              <span className="material-symbols-outlined text-[17px]">person_add</span>
+              <span>Add Personnel</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-1.5 text-[11px] text-on-surface-variant font-medium">
+            <span className="material-symbols-outlined text-[14px]">info</span>
+            <span>Click any user row to modify permissions, clearance level, or assigned cases</span>
           </div>
 
           {/* Users Table / List */}
@@ -758,6 +810,96 @@ function CasesContent() {
                   className="px-4 py-1.5 rounded-xl bg-primary text-on-primary text-xs font-bold cursor-pointer"
                 >
                   {savingCase ? "Creating..." : "Create"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Add Personnel (Admin Only) */}
+      {showCreateUser && (
+        <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-surface-container-low border border-outline-variant/30 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-float">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-base text-primary flex items-center gap-2">
+                <span className="material-symbols-outlined text-[20px]">person_add</span>
+                <span>Add Personnel</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowCreateUser(false)}
+                className="p-1 rounded-lg text-on-surface-variant hover:text-on-surface cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateUser} className="space-y-3">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-on-surface">Full Name</label>
+                <input
+                  type="text"
+                  value={newUserName}
+                  onChange={(e) => setNewUserName(e.target.value)}
+                  placeholder="e.g. Det. Alex Cross"
+                  required
+                  className="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-xl px-3 py-2 text-xs text-on-surface"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-on-surface">Official Email</label>
+                <input
+                  type="email"
+                  value={newUserEmail}
+                  onChange={(e) => setNewUserEmail(e.target.value)}
+                  placeholder="alex.cross@casememory.local"
+                  required
+                  className="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-xl px-3 py-2 text-xs text-on-surface"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-on-surface">Temporary Password</label>
+                <input
+                  type="password"
+                  value={newUserPassword}
+                  onChange={(e) => setNewUserPassword(e.target.value)}
+                  placeholder="Min 6 characters"
+                  required
+                  minLength={6}
+                  className="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-xl px-3 py-2 text-xs text-on-surface"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-on-surface">Assigned Clearance Role</label>
+                <select
+                  value={newUserRole}
+                  onChange={(e: any) => setNewUserRole(e.target.value)}
+                  className="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-xl px-3 py-2 text-xs text-on-surface font-sans cursor-pointer"
+                >
+                  <option value="investigator">Investigator (Read &amp; Write cases)</option>
+                  <option value="viewer">Viewer (Read-only case queries)</option>
+                  <option value="admin">Administrator (Full case &amp; user access)</option>
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateUser(false)}
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold text-on-surface-variant hover:bg-surface-container cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingUser}
+                  className="px-4 py-1.5 rounded-xl bg-primary text-on-primary text-xs font-bold disabled:opacity-50 cursor-pointer shadow-xs"
+                >
+                  {savingUser ? "Adding..." : "Add User"}
                 </button>
               </div>
             </form>
